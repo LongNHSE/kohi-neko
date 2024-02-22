@@ -1,0 +1,4 @@
+{
+  "appService.defaultWebAppToDeploy": "undefined/subscriptions/3767a275-6a27-4c04-9b18-421c0e18b8b1/resourceGroups/chltest/providers/Microsoft.Web/sites/kohi-neko",
+  "appService.deploySubpath": "."
+}
