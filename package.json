@@ -11,7 +11,6 @@
     "dev:prod": "eslint . && nodemon server.js",
     "dev": "eslint . && nodemon server.js",
     "debug": "ndb server.js"
-    // "build": ""
   },
   "dependencies": {
     "axios": "^1.6.7",
