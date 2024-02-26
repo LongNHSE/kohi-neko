@@ -8,8 +8,8 @@
   "scripts": {
     "lint": "eslint .",
     "lint --fix": "eslint . --fix",
-    "dev:prod": "eslint . && nodemon server.js",
-    "dev": "eslint . && nodemon server.js",
+    "dev:prod": "eslint . && nodemon index.js",
+    "dev": "eslint . && nodemon index.js",
     "debug": "ndb server.js"
   },
   "dependencies": {
