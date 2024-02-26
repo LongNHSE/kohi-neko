@@ -12,6 +12,7 @@ const ApiResponse = require('../dto/ApiResponse');
 const AppError = require('../utils/appError');
 const tokenBlacklist = require('../models/tokenBlackListModel');
 const User = require('../models/userModel');
+const { frontendURL } = require('../utils/urlConstant');
 
 exports.login = catchAsync(async (req, res, next) => {
   const { username, password } = req.body;
@@ -104,19 +105,19 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: 'http://localhost:8000/auth/google/callback',
+      callbackURL: `http://localhost:5173/login`,
       scope: ['email', 'profile'],
     },
-    (accessToken, refreshToken, profile, cb) => {
+    async (accessToken, refreshToken, profile, cb) => {
       console.log(profile);
-      // User.findOne({}, (err, user) => {
-      //   console.log(user, 'oauth');
-      //   if (user) {
-      //     user.accessToken = accessToken;
-      //     user.refeshToken = refreshToken;
-      //   }
-      //   cb(err, user);
-      // });
+      const user = await User.findOne({ email: profile.emails[0].value });
+      console.log(user, 'oauth');
+      if (user) {
+        user.accessToken = accessToken;
+        user.refeshToken = refreshToken;
+      }
+      cb(null, user);
+
       profile.accessToken = accessToken;
       profile.refreshToken = refreshToken;
       cb(null, profile);
@@ -124,22 +125,30 @@ passport.use(
   ),
 );
 
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
 exports.googleLogin = catchAsync((req, res, next) => {
-  passport.authenticate('google', { scope: ['email', 'profile'] })(
-    req,
-    res,
-    next,
-  );
+  passport.authenticate('google', {
+    session: 'false',
+    scope: ['email', 'profile'],
+  });
 });
 
 exports.googleLoginCallback = passport.authenticate('google', {
-  failureRedirect: 'auth/login/google/failure',
+  failureRedirect: `${frontendURL}/login`,
+  // successRedirect: `${frontendURL}`,
 });
 
 exports.googleLoginSuccess = (req, res) => {
   if (req.user) {
     res.status(200).json(
-      ApiResponse(200, 'Google login successfully', {
+      new ApiResponse(200, 'Google login successfully', {
         accessToken: req.user.accessToken,
         user: req.user,
       }),
@@ -149,5 +158,5 @@ exports.googleLoginSuccess = (req, res) => {
 
 exports.googleLoginFailure = (req, res) => {
   // Handle failure redirect in the client-side code
-  res.status(401).json(ApiResponse(401, 'Google login failed', null));
+  res.status(401).json(new ApiResponse(401, 'Google login failed', null));
 };

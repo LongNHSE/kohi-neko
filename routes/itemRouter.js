@@ -15,7 +15,7 @@ itemRouter
   .patch(itemController.updateItem);
 
 itemRouter.route('/:id/images').post(itemController.addImage);
-
+itemRouter.delete('/:id/images/:imageId', itemController.deleteImage);
 itemRouter
   .route('/')
   .get(itemController.getAllItemByShopId)

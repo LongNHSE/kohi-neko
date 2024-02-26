@@ -51,3 +51,13 @@ exports.addImage = [
     res.status(200).send(ApiResponse.success('Add image successfully', images));
   }),
 ];
+
+exports.deleteImage = catchAsync(async (req, res, next) => {
+  const images = await itemService.deleteItemImages(
+    req.params.id,
+    req.params.imageId,
+  );
+  res
+    .status(200)
+    .send(ApiResponse.success('Delete image successfully', images));
+});

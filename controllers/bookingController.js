@@ -464,3 +464,22 @@ exports.changeBookingStatus = catchAsync(async (req, res, next) => {
     .status(200)
     .send(ApiResponse.success('Change booking status successfully', null));
 });
+
+exports.getBookingByCoffeeShopId = catchAsync(async (req, res, next) => {
+  const { page, perPage, bookingStatus, sort } = req.query;
+  const bookings = await BookingService.getBookingByCoffeeShopId(
+    req.query.coffeeShopId,
+    page,
+    perPage,
+    bookingStatus,
+    sort,
+  );
+  res
+    .status(200)
+    .send(
+      ApiResponse.success(
+        'Get booking by coffee shop id successfully',
+        bookings,
+      ),
+    );
+});

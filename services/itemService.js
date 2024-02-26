@@ -32,8 +32,7 @@ exports.getAllItemsByShopId = (shopId) =>
   CoffeeShop.findById(shopId)
     .populate({
       path: 'items',
-      match: { isDeleted: false },
-      select: '-__v -isDeleted -createdAt -updatedAt -coffeeShopId',
+      select: '-__v -createdAt -updatedAt -coffeeShopId',
       populate: {
         path: 'itemTypeId',
         select: 'itemTypeName -_id',
@@ -46,6 +45,7 @@ exports.addItemImages = async (id, images) => {
   console.log(item.images);
   if (!item) throw new AppError('Item not found', 404);
   const folder = `items/${id}`;
+  if (!images || !images.images) throw new AppError('Images are required', 400);
   if (images.images) {
     // eslint-disable-next-line node/no-unsupported-features/es-builtins
     const imageURLs = await Promise.allSettled(
@@ -59,4 +59,16 @@ exports.addItemImages = async (id, images) => {
   }
   await item.save({ validateBeforeSave: false });
   return item.images;
+};
+
+exports.deleteItemImages = async (id, imageId) => {
+  const item = await Item.findById(id);
+  if (!item) throw new AppError('Item not found', 404);
+
+  const image = item.images.id(imageId);
+  if (!image) throw new AppError('Image not found', 404);
+
+  item.images.pull(image._id);
+  await item.save({ validateBeforeSave: false });
+  return item;
 };

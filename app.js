@@ -3,7 +3,11 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const schedule = require('node-schedule');
 const cors = require('cors');
+const cookieSession = require('cookie-session');
+const passport = require('passport');
+const bookingService = require('./services/bookingService');
 
 const globalErrorHandler = require('./controllers/errorController');
 const AppError = require('./utils/appError');
@@ -27,6 +31,7 @@ const authRouter = require('./routes/authRouter');
 const packageRouter = require('./routes/packageRouter');
 const packageSubscriptionRouter = require('./routes/packageSubscriptionRouter');
 const uploadRouter = require('./routes/uploadRouter');
+const testRouter = require('./routes/testRouter');
 
 const app = express();
 
@@ -40,7 +45,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: [process.env.SESSION_SECRET],
+    maxAge: 24 * 60 * 60 * 1000,
+  }),
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
+const cronExpress = '0,30 * * * *';
+schedule.scheduleJob(cronExpress, () => {
+  console.log('Cron job running');
+  const newDate = new Date().getTime();
+  console.log(new Date(newDate).toLocaleString());
+  bookingService.updateAllBookingStatus();
+});
+app.use('/test', testRouter);
 app.use('/', indexRouter);
 app.use('/auth', authRouter.router);
 app.use('/users', usersRouter);

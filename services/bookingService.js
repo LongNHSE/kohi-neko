@@ -52,7 +52,7 @@ exports.getBookingById = (id) =>
       path: 'invoices',
       populate: {
         path: 'invoiceItems',
-        populate: { path: 'itemId', select: 'name -_id' },
+        populate: { path: 'itemId', select: 'name _id images price' },
       },
       select: 'invoiceItems totalPrice',
     })
@@ -71,6 +71,7 @@ exports.getBookingByUserId = (userId, page, perPage, status, sort) => {
   let query = { customerId: userId };
   if (status !== '') {
     query = {
+      // eslint-disable-next-line no-dupe-keys
       $and: [{ customerId: userId }, { status: { $ne: 'unpaid' }, status }],
     };
   } else {
@@ -226,13 +227,50 @@ exports.refundBooking = async (id, req) => {
 };
 
 exports.getTotalBookingByUserId = (userId, status) => {
-  const query = { customerId: userId };
+  let query = { customerId: userId };
   if (status !== '') {
-    query.status = status;
+    query = {
+      // eslint-disable-next-line no-dupe-keys
+      $and: [{ customerId: userId }, { status: { $ne: 'unpaid' }, status }],
+    };
+  } else {
+    query.status = { $ne: 'unpaid' };
   }
-  query.status = { $ne: 'unpaid' };
 
   return BookingModel.countDocuments(query);
 };
 
 exports.removeBooking = (id) => BookingModel.findByIdAndDelete(id);
+
+exports.updateAllBookingStatus = async () => {
+  const now = new Date();
+  await BookingModel.updateMany(
+    { status: 'pending', startTime: { $lt: now } },
+    { status: 'in progress' },
+  );
+
+  // Update bookings with status 'in progress' and endTime less than now to 'finished'
+  await BookingModel.updateMany(
+    { status: 'in progress', endTime: { $lt: now } },
+    { status: 'finished' },
+  );
+};
+
+// getBookingByCoffeeShopId
+exports.getBookingByCoffeeShopId = (
+  coffeeShopId,
+  page,
+  perPage,
+  bookingStatusInput,
+  sort,
+) =>
+  BookingModel.find({ coffeeShopId, status: bookingStatusInput })
+    .populate('customerId', 'username')
+    .populate('tableId', 'name')
+    .populate('coffeeShopId', 'shopName')
+    .sort({ startTime: sort })
+    .skip((page - 1) * perPage)
+    .limit(perPage);
+
+exports.getTotalBookingByCoffeeShopId = (coffeeShopId, bookingStatusInput) =>
+  BookingModel.countDocuments({ coffeeShopId, status: bookingStatusInput });

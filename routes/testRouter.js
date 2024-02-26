@@ -2,9 +2,8 @@ const express = require('express');
 
 const router = express.Router();
 
-/* GET home page. */
-router.get('/', (req, res) => {
-  res.send('Welcome to the Coffee Shop API');
+router.get('/test', (req, res) => {
+  res.send('test');
 });
 
 module.exports = router;

@@ -25,8 +25,8 @@ exports.createArea = catchAsync(async (req, res) => {
 });
 
 exports.updateArea = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const updatedArea = await areaService.updateArea(id, req.body);
+  const { areaId } = req.params;
+  const updatedArea = await areaService.updateArea(areaId, req.body);
   if (!updatedArea) {
     res.status(404).send(new ApiResponse(404, 'Area not found', null));
   } else {
@@ -35,8 +35,8 @@ exports.updateArea = catchAsync(async (req, res) => {
 });
 
 exports.deleteArea = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const deletedArea = await areaService.deleteArea(id);
+  const { areaId } = req.params;
+  const deletedArea = await areaService.deleteArea(areaId);
   if (!deletedArea) {
     res.status(404).send(new ApiResponse(404, 'Area not found', null));
   } else {

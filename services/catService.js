@@ -4,35 +4,51 @@ const AppError = require('../utils/appError');
 // const areaCatService = require('./areaCatService');
 
 exports.getAllCats = () =>
-  catModel.find({ isDeleted: false }).populate({
-    path: 'areaCats',
-    select: 'startTime endTime areaId',
-    options: { sort: { startTime: -1 } },
-    populate: { path: 'areaId', select: 'name isChildAllowed' },
-  });
-
-exports.getAllCatsByCoffeeShopId = (coffeeShopId, page, perPage, key, sort) => {
-  if (key === undefined) key = '';
-  return catModel
-    .find({
-      coffeeShopId,
-      $or: [
-        { name: { $regex: key, $options: 'i' } },
-        { origin: { $regex: key, $options: 'i' } },
-        { description: { $regex: key, $options: 'i' } },
-        { favorite: { $regex: key, $options: 'i' } },
-      ],
-      isDeleted: false,
-    })
-    .sort(sort)
-    .skip((page - 1) * perPage)
+  catModel
+    .find({ isDeleted: false })
+    // .populate({
+    //   path: 'catStatus',
+    //   select: 'statusId startTime endTime',
+    //   options: { sort: { createdAt: -1 } },
+    //   populate: { path: 'statusId', select: 'name' },
+    // })
     .populate({
       path: 'areaCats',
       select: 'startTime endTime areaId',
       options: { sort: { startTime: -1 } },
       populate: { path: 'areaId', select: 'name isChildAllowed' },
-    })
-    .limit(perPage);
+    });
+
+exports.getAllCatsByCoffeeShopId = (coffeeShopId, page, perPage, key, sort) => {
+  if (key === undefined) key = '';
+  return (
+    catModel
+      .find({
+        coffeeShopId,
+        $or: [
+          { name: { $regex: key, $options: 'i' } },
+          { origin: { $regex: key, $options: 'i' } },
+          { description: { $regex: key, $options: 'i' } },
+          { favorite: { $regex: key, $options: 'i' } },
+        ],
+        isDeleted: false,
+      })
+      .sort(sort)
+      .skip((page - 1) * perPage)
+      .populate({
+        path: 'areaCats',
+        select: 'startTime endTime areaId',
+        options: { sort: { startTime: -1 } },
+        populate: { path: 'areaId', select: 'name isChildAllowed' },
+      })
+      // .populate({
+      //   path: 'catStatus',
+      //   select: 'statusId startTime endTime',
+      //   options: { sort: { createdAt: -1 } },
+      //   populate: { path: 'statusId', select: 'name' },
+      // })
+      .limit(perPage)
+  );
 };
 exports.getCatById = (id) =>
   catModel
@@ -43,6 +59,12 @@ exports.getCatById = (id) =>
       options: { sort: { startTime: -1 } },
       populate: { path: 'areaId', select: 'name isChildAllowed' },
     })
+    // .populate({
+    //   path: 'catStatus',
+    //   select: 'statusId startTime endTime',
+    //   options: { sort: { createdAt: -1 } },
+    //   populate: { path: 'statusId', select: 'name' },
+    // })
     .populate('coffeeShopId');
 
 exports.searchCat = (keyword, coffeeShopId, areaId, status) => {
@@ -54,30 +76,38 @@ exports.searchCat = (keyword, coffeeShopId, areaId, status) => {
   console.log('coffeeShopId', coffeeShopId);
   console.log('areaId', areaId);
   console.log('status', status);
-  return catModel
-    .find({
-      $or: [
-        {
-          $or: [
-            { name: { $regex: keyword || '', $options: 'i' } },
-            { origin: { $regex: keyword || '', $options: 'i' } },
-            { description: { $regex: keyword || '', $options: 'i' } },
-            { favorite: { $regex: keyword || '', $options: 'i' } },
-          ],
-        },
-        { $expr: { $eq: [keyword, ''] } },
-      ],
-      $and: [
-        { $or: [{ coffeeShopId }, { $expr: { $eq: [coffeeShopId, ''] } }] },
-      ],
-      isDeleted: false,
-    })
-    .populate({
-      path: 'areaCats',
-      select: 'startTime endTime areaId',
-      options: { sort: { startTime: -1 } },
-      populate: { path: 'areaId', select: 'name isChildAllowed' },
-    });
+  return (
+    catModel
+      .find({
+        $or: [
+          {
+            $or: [
+              { name: { $regex: keyword || '', $options: 'i' } },
+              { origin: { $regex: keyword || '', $options: 'i' } },
+              { description: { $regex: keyword || '', $options: 'i' } },
+              { favorite: { $regex: keyword || '', $options: 'i' } },
+            ],
+          },
+          { $expr: { $eq: [keyword, ''] } },
+        ],
+        $and: [
+          { $or: [{ coffeeShopId }, { $expr: { $eq: [coffeeShopId, ''] } }] },
+        ],
+        isDeleted: false,
+      })
+      // .populate({
+      //   path: 'catStatus',
+      //   select: 'statusId',
+      //   options: { sort: { createdAt: -1 } },
+      //   populate: { path: 'statusId', select: 'name' },
+      // })
+      .populate({
+        path: 'areaCats',
+        select: 'startTime endTime areaId',
+        options: { sort: { startTime: -1 } },
+        populate: { path: 'areaId', select: 'name isChildAllowed' },
+      })
+  );
 };
 
 exports.getCatByAreaId = async (coffeeShopId, areaId) => {

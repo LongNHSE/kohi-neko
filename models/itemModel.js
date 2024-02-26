@@ -6,16 +6,16 @@ const itemSchema = new mongoose.Schema(
     name: {
       type: String,
       unique: false,
-      validate: {
-        validator: async function (v) {
-          const count = await this.model('items').countDocuments({
-            name: v,
-            coffeeShopId: this.coffeeShopId,
-          });
-          return count === 0;
-        },
-        message: 'Item with this name already exists in the same coffee shop',
-      },
+      // validate: {
+      //   validator: async function (v) {
+      //     const count = await this.model('items').countDocuments({
+      //       name: v,
+      //       coffeeShopId: this.coffeeShopId,
+      //     });
+      //     return count === 0;
+      //   },
+      //   message: 'Item with this name already exists in the same coffee shop',
+      // },
       required: [true, 'Item must have a name'],
     },
     itemTypeId: {

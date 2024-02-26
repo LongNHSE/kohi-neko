@@ -19,6 +19,20 @@ const catSchema = new mongoose.Schema(
         ref: 'area_cats',
       },
     ],
+    status: {
+      type: String,
+      default: 'active',
+      enum: {
+        values: ['active', 'inactive', 'sleeping', 'sick'],
+        message: 'Status is either: active, inactive, sleeping, sick',
+      },
+    },
+    // catStatus: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: 'cat_statuses',
+    //   },
+    // ],
     name: {
       type: String,
       required: [true, 'cat required a name'],
