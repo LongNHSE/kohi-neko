@@ -21,6 +21,7 @@ exports.login = async (username, password) => {
   const user = await User.findOne({ username }).select(
     '+password -refreshToken -passwordResetExpires -__v -createdAt -updatedAt -isDeleted -passwordResetToken -passwordResetTokenExpires -passwordChangedAt',
   );
+
   if (!user || !(await user.comparePassword(password, user.password))) {
     return null;
   }
