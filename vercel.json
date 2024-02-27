@@ -11,11 +11,5 @@
       "src": "/(.*)",
       "dest": "/"
     }
-  ],
-  "crons": [
-    {
-      "path": "/utils/cron",
-      "schedule": "0,30 * * * *"
-    }
   ]
 }
