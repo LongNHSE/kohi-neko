@@ -58,13 +58,13 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// const cronExpress = '0,30 * * * *';
-// schedule.scheduleJob(cronExpress, () => {
-//   console.log('Cron job running');
-//   const newDate = new Date().getTime();
-//   console.log(new Date(newDate).toLocaleString());
-//   bookingService.updateAllBookingStatus();
-// });
+const cronExpress = '0,30 * * * *';
+schedule.scheduleJob(cronExpress, () => {
+  console.log('Cron job running');
+  const newDate = new Date().getTime();
+  console.log(new Date(newDate).toLocaleString());
+  bookingService.updateAllBookingStatus();
+});
 app.use('/test', testRouter);
 app.use('/', indexRouter);
 app.use('/auth', authRouter.router);
