@@ -6,13 +6,15 @@ dotenv.config({ path: './config.env' });
 const sendEmail = async (options) => {
   // 1) Create a transporter
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.mailtrap.io',
-    port: process.env.EMAIL_PORT || '2525',
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: process.env.EMAIL_PORT || '465',
     // secure: false,
     auth: {
-      user: process.env.EMAIL_USERNAME || '3efe333c703240',
-      pass: process.env.EMAIL_PASSWORD || 'a7375870c3355d',
+      user: process.env.EMAIL_USERNAME || 'thekohineko00@gmail.com',
+      pass: process.env.EMAIL_PASSWORD || 'drmkskalukbjipip',
     },
+
+    // gmailPassword: process.env.GMAIL_PASSWORD || 'drmk skal ukbj ipip',
   });
   const mailOptions = {
     from: 'Kohi-Neko <kohineko@gmail.com>',

@@ -99,6 +99,7 @@ exports.forgotPassword = async (email, protocol, host) => {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
   const resetURL = `${protocol}://${host}/resetPassword/${resetToken}`;
+  console.log(resetURL);
   const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
 
   try {

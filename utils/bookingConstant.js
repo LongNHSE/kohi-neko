@@ -1,7 +1,8 @@
 exports.bookingStatus = {
-  ACTIVE: 'active',
-  COMPLETED: 'completed',
+  UNPAID: 'unpaid',
+  PAID: 'paid',
   REFUND: 'refund',
+  PENDING: 'pending',
 };
 
 exports.customerRefundPenalty = {

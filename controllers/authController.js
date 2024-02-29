@@ -62,6 +62,7 @@ exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
   if (!token) return next(new AppError('Please login to get access', 401));
   token = token.replace('Bearer ', '');
   const isBlacklisted = await tokenBlacklist.find({ token });
+  console.log(isBlacklisted, 'isBlacklisted');
   if (isBlacklisted.length > 0 && isBlacklisted[0]) {
     return next(
       new AppError('This token has been blacklisted. Please login again.', 401),
@@ -69,7 +70,9 @@ exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
   }
   let decoded;
   try {
+    console.log(token, 'token');
     decoded = jwt.decode(token, process.env.ACCESS_TOKEN_SECRET);
+    console.log(decoded, 'decoded');
   } catch (err) {
     return next(new AppError('Error decoding token', 400));
   }

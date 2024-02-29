@@ -129,6 +129,7 @@ exports.getCoffeeShopOpenTimeAndCloseTime = catchAsync(
         req.params.id,
         req.body.date,
       );
+    console.log(coffeeShop, 'coffeeShop');
     res
       .status(200)
       .send(

@@ -40,12 +40,21 @@ router
 
 router.use('/:bookingId/vnpay', vnPayRouter.router);
 router.use('/:bookingId/invoices', InvoiceRouter.router);
-router.post(
-  '/refund/:id',
-  authMiddleware.verifyToken,
-  authMiddleware.restrictTo(constant.CUSTOMER_ROLE),
-  bookingController.refundBooking,
-);
+router
+  .get(
+    '/refund/:id',
+    authMiddleware.verifyToken,
+    authMiddleware.restrictTo(constant.CUSTOMER_ROLE),
+    bookingController.getRefundBooking,
+  )
+  .post(
+    '/refund/:id',
+    authMiddleware.verifyToken,
+    authMiddleware.restrictTo(constant.CUSTOMER_ROLE),
+    bookingController.refundBooking,
+  );
+
+router.route('/coffeeShop?').get(bookingController.getBookingByCoffeeShopId);
 
 exports.router = router;
 exports.path = '/bookings';

@@ -32,6 +32,7 @@ exports.getAllItemsByShopId = (shopId) =>
   CoffeeShop.findById(shopId)
     .populate({
       path: 'items',
+      match: { isDeleted: false },
       select: '-__v -createdAt -updatedAt -coffeeShopId',
       populate: {
         path: 'itemTypeId',
@@ -42,7 +43,6 @@ exports.getAllItemsByShopId = (shopId) =>
 
 exports.addItemImages = async (id, images) => {
   const item = await Item.findById(id);
-  console.log(item.images);
   if (!item) throw new AppError('Item not found', 404);
   const folder = `items/${id}`;
   if (!images || !images.images) throw new AppError('Images are required', 400);

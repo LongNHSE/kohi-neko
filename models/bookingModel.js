@@ -55,6 +55,10 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    refundPercent: {
+      type: Number,
+      required: false,
+    },
     refundAmount: {
       type: Number,
       required: false,

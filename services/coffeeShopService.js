@@ -114,7 +114,7 @@ exports.getCoffeeShopOpenTimeAndCloseTime = async (id, date) => {
   console.log(day, date, id, 'day');
   return CoffeeShop.findOne(
     { _id: id },
-    { openTime: { $elemMatch: { day: day } } },
+    { shopName: 1, openTime: { $elemMatch: { day: day } } },
   );
 };
 

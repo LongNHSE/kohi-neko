@@ -63,14 +63,6 @@ exports.forgotPassword = (req, res) => {
         res.status(404).send(ApiResponse.error('User not found'));
       } else {
         res.status(200).send({ status: 200, resetToken: resetToken });
-        res
-          .status(200)
-          .send(
-            ApiResponse.success(
-              'Generate reset token successfully',
-              resetToken,
-            ),
-          );
       }
     })
     .catch((err) => {

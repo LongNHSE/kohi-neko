@@ -483,3 +483,11 @@ exports.getBookingByCoffeeShopId = catchAsync(async (req, res, next) => {
       ),
     );
 });
+
+exports.getRefundBooking = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const bookings = await BookingService.getRefundBookingInformation(id, req);
+  res
+    .status(200)
+    .send(ApiResponse.success('Get refund booking successfully', bookings));
+});

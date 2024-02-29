@@ -127,12 +127,14 @@ exports.getBookingByUserId = (userId, page, perPage, status, sort) => {
 exports.updateStatus = (id, status) =>
   BookingModel.findByIdAndUpdate(id, { status }, { new: true });
 
-const handleRefund = async (bookingId, userId, refundAmount) => {
+const handleRefund = async (bookingId, userId, refundAmount, refundPercent) => {
   const booking = await BookingModel.findById(bookingId).populate('invoices');
   if (!booking) throw new AppError('Booking not found', 404);
   booking.status = bookingStatus.REFUND;
   booking.refundMakerId = userId;
   booking.refundAmount = refundAmount;
+  booking.refundPercent = refundPercent;
+
   const user = await userService.findOne({ _id: userId });
   if (!user) throw new AppError('User not found', 404);
   const { invoices } = booking;
@@ -159,6 +161,7 @@ const handleRefund = async (bookingId, userId, refundAmount) => {
       refundMakerId: user._id,
       bookingCustomerId: booking.customerId,
       refundAmount: refundAmount,
+      refundPercent: refundPercent,
       oldWallet: oldWallet,
       wallet: user.wallet,
       bookingId: booking._id,
@@ -184,17 +187,21 @@ const getRefundAmount = async (booking, user) => {
     );
 
   const { invoices } = booking;
-  let total = booking.price;
+  let refundAmount = booking.price;
   //if refund maker is user and booking time is less than 24 hours, then refund 50% of booking total amount
+  let refundPercent = 0;
   if (
     user.role === constants.CUSTOMER_ROLE &&
     differ < customerRefundPenalty.MAX_TIME
-  )
-    total *= customerRefundPenalty.PENALTY;
+  ) {
+    refundPercent = customerRefundPenalty.PENALTY;
+    refundAmount *= refundPercent;
+  }
+
   invoices.forEach((invoice) => {
-    total += invoice.totalPrice;
+    refundAmount += invoice.totalPrice;
   });
-  return total;
+  return { refundAmount, refundPercent };
 };
 
 const isBookingOwnerOrShopManager = async (bookingId, user) => {
@@ -209,6 +216,27 @@ const isBookingOwnerOrShopManager = async (bookingId, user) => {
   return booking.customerId === user._id;
 };
 
+exports.getRefundBookingInformation = async (id, req) => {
+  const booking = await BookingModel.findById(id).populate('invoices');
+  if (!booking) throw new AppError('Booking not found', 404);
+  console.log(req.user, 'req.user');
+  if (!isBookingOwnerOrShopManager(id, req.user))
+    throw new AppError('You are not the owner of this booking', 403);
+  if (booking.status === bookingStatus.REFUND)
+    throw new AppError('Booking already refunded', 400);
+  if (
+    booking.status !== bookingStatus.PAID &&
+    booking.status !== bookingStatus.PENDING
+  )
+    throw new AppError('Booking has not been paid', 400);
+  const { refundAmount, refundPercent } = await getRefundAmount(
+    booking,
+    req.user,
+  );
+  const bookingPrice = booking.price;
+  return { refundAmount, refundPercent, bookingPrice };
+};
+
 exports.refundBooking = async (id, req) => {
   const booking = await BookingModel.findById(id).populate('invoices');
   if (!booking) throw new AppError('Booking not found', 404);
@@ -216,14 +244,22 @@ exports.refundBooking = async (id, req) => {
     throw new AppError('You are not the owner of this booking', 403);
   if (booking.status === bookingStatus.REFUND)
     throw new AppError('Booking already refunded', 400);
-  const refundAmount = await getRefundAmount(booking, req.user);
+  if (
+    booking.status !== bookingStatus.PAID ||
+    booking.status !== bookingStatus.PENDING
+  )
+    throw new AppError('Booking has not been paid', 400);
+  const { refundAmount, refundPercent } = await getRefundAmount(
+    booking,
+    req.user,
+  );
   const vnPayResponse = await vnpayController.createRefundUrl(
     req,
     id,
     refundAmount,
   );
   console.log(vnPayResponse.status);
-  return handleRefund(id, req.user._id, refundAmount);
+  return handleRefund(id, req.user._id, refundAmount, refundPercent);
 };
 
 exports.getTotalBookingByUserId = (userId, status) => {

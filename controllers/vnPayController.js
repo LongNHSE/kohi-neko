@@ -149,7 +149,7 @@ exports.createRefundUrl = async (req, bookingId, amount) => {
   const tmnCode = process.env.VNP_TMNCODE;
   const secretKey = process.env.VNP_HASHSECRET;
   let vnpUrl = 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction';
-  const returnUrl = 'https://kohi-neko.vercel.app/vnPay/return';
+  const returnUrl = 'http://localhost:8000/vnPay/return';
 
   console.log(`Refund for ${bookingId} amount:  ${amount}`);
   // let locale = req.body.language;
