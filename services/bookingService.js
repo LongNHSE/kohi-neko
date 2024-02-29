@@ -239,15 +239,18 @@ exports.getRefundBookingInformation = async (id, req) => {
 
 exports.refundBooking = async (id, req) => {
   const booking = await BookingModel.findById(id).populate('invoices');
+  console.log(booking, 'booking');
+  console.log(bookingStatus.PENDING, 'bookingStatus.PENDING');
+  console.log(
+    booking.status === bookingStatus.PENDING,
+    'booking.status === bookingStatus.PENDING',
+  );
   if (!booking) throw new AppError('Booking not found', 404);
   if (!isBookingOwnerOrShopManager(id, req.user))
     throw new AppError('You are not the owner of this booking', 403);
   if (booking.status === bookingStatus.REFUND)
     throw new AppError('Booking already refunded', 400);
-  if (
-    booking.status !== bookingStatus.PAID ||
-    booking.status !== bookingStatus.PENDING
-  )
+  if (booking.status !== bookingStatus.PENDING)
     throw new AppError('Booking has not been paid', 400);
   const { refundAmount, refundPercent } = await getRefundAmount(
     booking,

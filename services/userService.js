@@ -146,12 +146,15 @@ exports.updatePassword = async (
   return { token, user: freshUser };
 };
 
-exports.updateUser = (id, data) => {
-  const filteredBody = filterObj(data, 'firstName', 'lastName');
-  const freshUser = User.findByIdAndUpdate(id, filteredBody, {
+exports.updateUser = async (id, data) => {
+  // const filteredBody = filterObj(data, 'firstName', 'lastName', 'wallet');
+  // console.log(filteredBody);
+  console.log(id, 'id');
+  const freshUser = await User.findByIdAndUpdate({ _id: id }, data, {
     new: true,
     runValidators: true,
   });
+  console.log(freshUser, 'freshUser');
   return freshUser;
 };
 
