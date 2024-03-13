@@ -22,12 +22,12 @@ mongoose
   })
   .catch((err) => console.log(err));
 
-setInterval(async () => {
-  console.log('Job running');
-  const newDate = new Date().getTime();
-  console.log(new Date(newDate).toLocaleString());
-  await bookingService.updateAllBookingStatus();
-}, 5000);
+// setInterval(async () => {
+//   console.log('Job running');
+//   const newDate = new Date().getTime();
+//   console.log(new Date(newDate).toLocaleString());
+//   await bookingService.updateAllBookingStatus();
+// }, 5000);
 // schedule.scheduleJob(cronExpress, async () => {
 //   console.log('Cron job running');
 //   const newDate = new Date().getTime();
