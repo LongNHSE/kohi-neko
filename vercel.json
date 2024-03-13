@@ -19,7 +19,7 @@
   "crons": [
     {
       "path": "/cronjob/cron",
-      "schedule": "* 1 * * *"
+      "schedule": "30 1 * * *"
     }
   ]
 }
