@@ -211,3 +211,18 @@ exports.updateCoffeeShopByAdmin = async (id, data) => {
   });
   return coffeeShop;
 };
+
+exports.deleteOpenTimes = async (id, openTimesToDeletes) => {
+  if (!openTimesToDeletes || openTimesToDeletes.length === 0)
+    throw new AppError('Open times to delete is undefined or empty', 400);
+  const coffeeShop = await CoffeeShop.findById(id);
+  if (!coffeeShop) throw new AppError('Coffee shop not found', 404);
+  coffeeShop.openTime = coffeeShop.openTime.filter((openTime) => {
+    if (!openTimesToDeletes.includes(openTime.day)) {
+      return true;
+    }
+    return false;
+  });
+  coffeeShop.save();
+  return coffeeShop.openTime;
+};

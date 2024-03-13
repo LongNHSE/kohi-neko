@@ -44,13 +44,17 @@ router
   .get(
     '/refund/:id',
     authMiddleware.verifyToken,
-    authMiddleware.restrictTo(constant.CUSTOMER_ROLE),
+    authMiddleware.restrictTo(
+      constant.CUSTOMER_ROLE,
+      constant.ADMIN_ROLE,
+      constant.SHOP_MANAGER,
+    ),
     bookingController.getRefundBooking,
   )
   .post(
     '/refund/:id',
     authMiddleware.verifyToken,
-    authMiddleware.restrictTo(constant.CUSTOMER_ROLE),
+    authMiddleware.restrictTo(constant.CUSTOMER_ROLE, constant.SHOP_MANAGER),
     bookingController.refundBooking,
   );
 

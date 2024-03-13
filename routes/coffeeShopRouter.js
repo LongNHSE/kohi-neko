@@ -33,6 +33,11 @@ coffeeShopRouter.post(
 coffeeShopRouter
   .route('/:id/approval')
   .patch(coffeeShopController.approveCoffeeShop);
+coffeeShopRouter.delete(
+  '/:id/openTimes',
+  authMiddleware.verifyToken,
+  coffeeShopController.deleteOpenTimes,
+);
 coffeeShopRouter
   .route('/:id')
   .get(coffeeShopController.getCoffeeShopById)

@@ -568,3 +568,5 @@ exports.getRefundBooking = catchAsync(async (req, res, next) => {
     .status(200)
     .send(ApiResponse.success('Get refund booking successfully', bookings));
 });
+
+//manager

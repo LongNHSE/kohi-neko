@@ -4,6 +4,9 @@ const AppError = require('../utils/appError');
 const vnpayController = require('../controllers/vnPayController');
 const constants = require('../utils/constant');
 const userService = require('./userService');
+const coffeeShopService = require('./coffeeShopService');
+const { frontendURL } = require('../utils/appConstant');
+const { sendEmail } = require('../utils/email');
 const {
   bookingStatus,
   customerRefundPenalty,
@@ -105,10 +108,10 @@ exports.getBookingById = (id) =>
   BookingModel.findById(id)
     .populate({
       path: 'invoices',
-      match: { isDeleted: false, status: { $ne: 'unpaid' } },
+      match: { isDeleted: false },
       populate: {
         path: 'invoiceItems',
-        match: { isDeleted: false, status: { $ne: 'unpaid' } },
+        match: { isDeleted: false },
         populate: { path: 'itemId', select: 'name _id images price' },
       },
       select: 'invoiceItems totalPrice status',
@@ -124,7 +127,7 @@ exports.getBookingById = (id) =>
     .populate('coffeeShopId', 'shopName address -_id')
     .populate(
       'customerId',
-      'username email phone -_id firstName lastName phoneNumber',
+      'username email phone firstName lastName phoneNumber',
     )
     .select('-__v -updatedAt -createdAt -isDeleted');
 
@@ -157,7 +160,7 @@ exports.getBookingByUserId = (userId, page, perPage, status, sort, key) => {
       { $unwind: '$coffeeShopId' },
       {
         $match: {
-          'coffeeShopId.shopName': { $regex: key, $options: 'i' },
+          'coffeeShopId.shopName': { $regex: key || '', $options: 'i' },
           ...query,
         },
       },
@@ -246,7 +249,7 @@ exports.getBookingByUserId = (userId, page, perPage, status, sort, key) => {
     { $unwind: '$coffeeShopId' },
     {
       $match: {
-        'coffeeShopId.shopName': { $regex: key, $options: 'i' },
+        'coffeeShopId.shopName': { $regex: key || '', $options: 'i' },
         ...query,
       },
     },
@@ -307,8 +310,14 @@ const handleRefund = async (bookingId, userId, refundAmount, refundPercent) => {
   booking.refundMakerId = userId;
   booking.refundAmount = refundAmount;
   booking.refundPercent = refundPercent;
+  let user = null;
+  if (booking.customerId) {
+    user = await userService.findOne({ _id: booking.customerId });
+  } else {
+    user = await userService.findOne({ _id: booking.customerId });
+  }
 
-  const user = await userService.findOne({ _id: userId });
+  console.log('user', user);
   if (!user) throw new AppError('User not found', 404);
   const { invoices } = booking;
 
@@ -330,6 +339,59 @@ const handleRefund = async (bookingId, userId, refundAmount, refundPercent) => {
 
     session.endSession();
     await booking.save();
+
+    //email
+    const coffeeShop = await coffeeShopService.getCoffeeShopById(
+      booking.coffeeShopId,
+    );
+    const mailResult = await sendEmail({
+      email: user.email,
+      subject: 'Your booking has been refunded!',
+      html: `<html>
+      <head>
+        <style>
+          h1 {
+            color: #333;
+            font-size: 24px;
+          }
+          p {
+            color: #666;
+            font-size: 16px;
+          }
+          ul {
+            list-style-type: none;
+            padding: 0;
+          }
+          li {
+            margin-bottom: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Your booking has been refunded!</h1>
+        <p>You have refunded booking at ${coffeeShop.shopName}.</p>
+        <p>Here are the details:</p>
+        <ul>
+          <li>Booking ID: ${bookingId}</li>
+          <li>Coffee shop: ${coffeeShop.shopName}</li>
+          <li>Refund time: ${new Date()}</li>
+                    <li>Refund by: ${
+                      user.role === constants.CUSTOMER_ROLE
+                        ? 'you'
+                        : 'shop manager'
+                    }</li>
+          <li>Refund percent: ${refundPercent}%</li>
+          <li>Refund amount: ${refundAmount}</li>
+        </ul>
+        <p> See your booking details <a href="${frontendURL}/booking/history/${bookingId}">here</a></p>
+        <p> For more information, please contact coffee shop manager at ${
+          coffeeShop.email
+        }</p>
+        <p> For more information, please contact us at thekohineko001@gmail.com</p>
+      </body>
+      </html>`,
+    });
+
     return {
       refundMakerId: user._id,
       bookingCustomerId: booking.customerId,
@@ -339,6 +401,7 @@ const handleRefund = async (bookingId, userId, refundAmount, refundPercent) => {
       wallet: user.wallet,
       bookingId: booking._id,
       bookingStatus: booking.status,
+      emailResult: mailResult,
     };
   } catch (err) {
     console.log(err);
@@ -367,6 +430,7 @@ const getRefundAmount = async (booking, user) => {
     user.role === constants.CUSTOMER_ROLE &&
     differ < customerRefundPenalty.MAX_TIME
   ) {
+    console.log('customerRefundPenalty.PENALTY', customerRefundPenalty.PENALTY);
     refundPercent = customerRefundPenalty.PENALTY;
     refundAmount *= refundPercent;
   }
@@ -392,7 +456,6 @@ const isBookingOwnerOrShopManager = async (bookingId, user) => {
 exports.getRefundBookingInformation = async (id, req) => {
   const booking = await BookingModel.findById(id).populate('invoices');
   if (!booking) throw new AppError('Booking not found', 404);
-  console.log(req.user, 'req.user');
   if (!isBookingOwnerOrShopManager(id, req.user))
     throw new AppError('You are not the owner of this booking', 403);
   if (booking.status === bookingStatus.REFUND)
@@ -412,12 +475,6 @@ exports.getRefundBookingInformation = async (id, req) => {
 
 exports.refundBooking = async (id, req) => {
   const booking = await BookingModel.findById(id).populate('invoices');
-  console.log(booking, 'booking');
-  console.log(bookingStatus.PENDING, 'bookingStatus.PENDING');
-  console.log(
-    booking.status === bookingStatus.PENDING,
-    'booking.status === bookingStatus.PENDING',
-  );
   if (!booking) throw new AppError('Booking not found', 404);
   if (!isBookingOwnerOrShopManager(id, req.user))
     throw new AppError('You are not the owner of this booking', 403);
@@ -429,12 +486,12 @@ exports.refundBooking = async (id, req) => {
     booking,
     req.user,
   );
-  const vnPayResponse = await vnpayController.createRefundUrl(
-    req,
-    id,
-    refundAmount,
-  );
-  console.log(vnPayResponse.status);
+  // const vnPayResponse = await vnpayController.createRefundUrl(
+  //   req,
+  //   id,
+  //   refundAmount,
+  // );
+  // console.log(vnPayResponse.status);
   return handleRefund(id, req.user._id, refundAmount, refundPercent);
 };
 
@@ -463,7 +520,7 @@ exports.getTotalBookingByUserId = (userId, status, key) => {
     { $unwind: '$coffeeShopId' },
     {
       $match: {
-        'coffeeShopId.shopName': { $regex: key, $options: 'i' },
+        'coffeeShopId.shopName': { $regex: key || '', $options: 'i' },
         ...matchStage,
       },
     },
@@ -530,76 +587,86 @@ exports.getBookingByCoffeeShopId = async (
   coffeeShopId,
   page,
   perPage,
-  bookingStatusInput,
+  status,
   sort,
   key,
 ) => {
-  let matchStage = {
-    coffeeShopId,
-    status: bookingStatusInput,
-  };
-
-  if (key) {
-    matchStage = {
-      coffeeShopId,
-      status: bookingStatusInput,
-      $or: [{ idLastFour: key }],
-    };
-  }
-
-  let ids = [];
-  if (key) {
-    const result = await BookingModel.aggregate([
-      {
-        $addFields: {
-          idString: { $toString: '$_id' },
-          idLastFour: {
-            $substr: [
-              { $toString: '$_id' },
-              { $subtract: [{ $strLenCP: { $toString: '$_id' } }, 4] },
-              4,
-            ],
-          },
+  console.log(key);
+  let query = { coffeeShopId: coffeeShopId };
+  if (status && status !== '') {
+    query = {
+      $and: [
+        {
+          coffeeShopId: coffeeShopId,
+          status: { $in: ['finished', 'in progress', 'pending', 'refund'] },
         },
-      },
-      {
-        $match: matchStage,
-      },
-    ]);
-    ids = result.map((doc) => doc._id); // Populate ids array with _id from result
-  }
-
-  const query = {
-    coffeeShopId,
-  };
-  if (bookingStatusInput !== '') {
-    query.status = bookingStatusInput;
-  } else {
-    query.status = {
-      $in: ['finished', 'in progress', 'pending', 'refund'],
-    };
-  }
-  if (key) {
-    query._id = { $in: ids };
-  }
-
-  return BookingModel.find(query)
-    .populate(
-      'customerId',
-      'username email phone -_id firstName lastName phoneNumber',
-    )
-    .populate({
-      path: 'tableId',
-      populate: [
-        { path: 'tableTypeId', select: 'name -_id' },
-        { path: 'areaId', select: 'name -_id' },
+        // eslint-disable-next-line no-dupe-keys
+        { status: { $ne: 'unpaid' }, status },
       ],
-      select: 'tableTypeId areaId -_id ', // select tableTypeId from tableId
-    })
-    .populate('coffeeShopId', 'shopName')
-    .sort({ startTime: sort })
-    .skip((page - 1) * perPage)
-    .limit(perPage);
+    };
+  } else {
+    query.status = { $in: ['finished', 'in progress', 'pending', 'refund'] };
+  }
+  const sortInt = sort === 'asc' ? 1 : -1;
+
+  return BookingModel.aggregate([
+    {
+      $match: query,
+    },
+    {
+      $lookup: {
+        from: 'users', // replace with your actual User collection name
+        localField: 'customerId',
+        foreignField: '_id',
+        as: 'customerId',
+      },
+    },
+    { $unwind: '$customerId' },
+    {
+      $lookup: {
+        from: 'tables', // replace with your actual Table collection name
+        localField: 'tableId',
+        foreignField: '_id',
+        as: 'tableId',
+      },
+    },
+    { $unwind: '$tableId' },
+    {
+      $lookup: {
+        from: 'areas', // replace with your actual Area collection name
+        localField: 'tableId.areaId',
+        foreignField: '_id',
+        as: 'tableId.areaId',
+      },
+    },
+    { $unwind: '$tableId.areaId' },
+    {
+      $lookup: {
+        from: 'table_types', // replace with your actual TableType collection name
+        localField: 'tableId.tableTypeId',
+        foreignField: '_id',
+        as: 'tableId.tableTypeId',
+      },
+    },
+    { $unwind: '$tableId.tableTypeId' },
+    {
+      $lookup: {
+        from: 'invoices', // replace with your actual Invoice collection name
+        localField: 'invoices',
+        foreignField: '_id',
+        as: 'invoices',
+      },
+    },
+    {
+      $skip: (page - 1) * perPage,
+    },
+    {
+      $limit: Number(perPage),
+    },
+    {
+      $sort: { startTime: sortInt },
+    },
+  ]);
 };
 
 exports.getTotalBookingByCoffeeShopId = async (

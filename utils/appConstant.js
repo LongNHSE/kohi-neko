@@ -1,4 +1,4 @@
-exports.frontendURL = 'https://kohi-neko-duqw-my-team-7c5732f4.vercel.app/';
+exports.frontendURL = 'http://localhost:5173';
 
 exports.coffeeShopStatus = {
   AVAILABLE: 'available',

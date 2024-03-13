@@ -82,7 +82,8 @@ exports.getPackageSubscriptionByPackageId = (packageId) =>
 exports.getAllPackageSubscriptionByCoffeeShopId = (coffeeShopId) =>
   packageSubscriptionModel
     .find({ coffeeShopId, isDeleted: false })
-    .populate('packageId');
+    .populate('packageId')
+    .sort({ startTime: -1 });
 
 exports.getPackageSubscriptionByCoffeeShopIdAndPackageId = (
   packageId,

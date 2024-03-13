@@ -35,11 +35,13 @@ const testRouter = require('./routes/testRouter');
 const areaStaffRouter = require('./routes/areaStaffRouter');
 const otpRouter = require('./routes/otpRouter');
 const adminRouter = require('./routes/adminRouter');
-const cronRouter = require('./routes/cron');
+const conRouter = require('./routes/cronRouter');
 
 const app = express();
 
 // view engine setup
+// app.set('views', path.join(__dirname, 'views'));
+// app.set('view engine', 'jade');
 
 app.use(cors());
 app.use(logger('dev'));
@@ -56,21 +58,16 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+bookingService.updateAllBookingStatus();
 
 const cronExpress = '0,30 * * * *';
-// setInterval(async () => {
-//   console.log('Job running');
-//   const newDate = new Date().getTime();
-//   console.log(new Date(newDate).toLocaleString());
-//   await bookingService.updateAllBookingStatus();
-// }, 5000);
-schedule.scheduleJob(cronExpress, async () => {
+schedule.scheduleJob(cronExpress, () => {
   console.log('Cron job running');
   const newDate = new Date().getTime();
   console.log(new Date(newDate).toLocaleString());
-  await bookingService.updateAllBookingStatus();
+  bookingService.updateAllBookingStatus();
 });
-app.use('/cronjob', cronRouter);
+app.use('/cronjob', conRouter);
 app.use('/admin', adminRouter);
 app.use('/otp', otpRouter);
 app.use('/test', testRouter);

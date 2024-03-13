@@ -47,11 +47,13 @@ exports.createPaymentUrl = async (req, res) => {
   const booking = await bookingService.getBookingById(bookingId);
   let invoiceTotal = 0;
   if (booking.invoices) {
+    console.log(booking.invoices, 'booking.invoices');
     invoiceTotal = booking.invoices.reduce(
       (acc, cur) => acc + cur.totalPrice,
       0,
     );
   }
+  console.log(invoiceTotal, 'invoiceTotal');
   const amount = booking.price + invoiceTotal;
   const { bankCode } = req.body;
   let locale = 'vn';

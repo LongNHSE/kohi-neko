@@ -1,10 +1,24 @@
 const coffeeShopService = require('../services/coffeeShopService');
 const catchAsync = require('../utils/catchAsync/catchAsync');
+const AppError = require('../utils/appError');
 const ApiResponse = require('../dto/ApiResponse');
 const { upload } = require('../utils/firebaseDB');
 
 exports.saveCoffeeShop = catchAsync(async (req, res, next) => {
   const { openTime } = req.body;
+  if (openTime) {
+    openTime.filter((element) => {
+      if (!element.day || element.openHour || !element.closeHour) return false;
+      return true;
+    });
+    openTime.forEach((element) => {
+      if (element.openHour >= element.closeHour) {
+        return next(
+          new AppError('closeHour must be greater than openHour', 400),
+        );
+      }
+    });
+  }
   if (openTime && openTime[0].day === 'All days') {
     req.body.openTime = [
       {
@@ -186,4 +200,17 @@ exports.getAllActiveCoffeeShops = catchAsync(async (req, res, next) => {
         coffeeShops,
       ),
     );
+});
+
+exports.deleteOpenTimes = catchAsync(async (req, res, next) => {
+  const coffeeShopId = req.params.id;
+  //array of open days
+  const openTimes = req.body;
+  const coffeeShop = await coffeeShopService.deleteOpenTimes(
+    coffeeShopId,
+    openTimes,
+  );
+  res
+    .status(200)
+    .send(ApiResponse.success('Delete open days successfully', coffeeShop));
 });
