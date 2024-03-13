@@ -16,11 +16,4 @@
       "dest": "/"
     }
   ]
-  // ,
-  // "crons": [
-  //   {
-  //     "path": "/cronjob/cron",
-  //     "schedule": "* * * * *"
-  //   }
-  // ]
 }
