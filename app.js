@@ -36,6 +36,7 @@ const areaStaffRouter = require('./routes/areaStaffRouter');
 const otpRouter = require('./routes/otpRouter');
 const adminRouter = require('./routes/adminRouter');
 const cronRouter = require('./routes/cron');
+
 const app = express();
 
 // view engine setup
