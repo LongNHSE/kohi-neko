@@ -141,7 +141,7 @@ exports.googleLogin = catchAsync((req, res, next) => {
 
 exports.googleLoginCallback = passport.authenticate('google', {
   failureRedirect: `${frontendURL}/login`,
-  // successRedirect: `${frontendURL}`,
+  successRedirect: `${frontendURL}`,
 });
 
 exports.googleLoginSuccess = catchAsync(async (req, res) => {
