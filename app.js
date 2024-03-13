@@ -55,14 +55,14 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-bookingService.updateAllBookingStatus();
+// bookingService.updateAllBookingStatus();
 
 const cronExpress = '0,30 * * * *';
-schedule.scheduleJob(cronExpress, () => {
+schedule.scheduleJob(cronExpress, async () => {
   console.log('Cron job running');
   const newDate = new Date().getTime();
   console.log(new Date(newDate).toLocaleString());
-  bookingService.updateAllBookingStatus();
+  await bookingService.updateAllBookingStatus();
 });
 app.use('/admin', adminRouter);
 app.use('/otp', otpRouter);
