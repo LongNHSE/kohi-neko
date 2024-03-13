@@ -1,4 +1,4 @@
-exports.frontendURL = 'https://kohineko.vercel.app';
+exports.frontendURL = 'https://kohi-neko-duqw-my-team-7c5732f4.vercel.app/';
 
 exports.coffeeShopStatus = {
   AVAILABLE: 'available',
