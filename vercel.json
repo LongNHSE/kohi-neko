@@ -18,8 +18,8 @@
   ],
   "crons": [
     {
-      "path": "/controllers/cron",
-      "schedule": "*/41 * * * *"
+      "path": "cron.js",
+      "schedule": "*/45 * * * *"
     }
   ]
 }
