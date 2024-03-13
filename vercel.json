@@ -16,11 +16,10 @@
       "dest": "/"
     }
   ],
-  "functions": {
-    "api/cron.js": {
-      "runtime": "nodejs18.x",
-      "memory": 3008,
+  "crons": [
+    {
+      "path": "/api/cron.js",
       "schedule": "* * * * *"
     }
-  }
+  ]
 }
