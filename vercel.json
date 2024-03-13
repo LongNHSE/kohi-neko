@@ -15,11 +15,12 @@
       "src": "/(.*)",
       "dest": "/"
     }
-  ],
-  "crons": [
-    {
-      "path": "/cronjob/cron",
-      "schedule": "* * * * *"
-    }
   ]
+  // ,
+  // "crons": [
+  //   {
+  //     "path": "/cronjob/cron",
+  //     "schedule": "* * * * *"
+  //   }
+  // ]
 }
