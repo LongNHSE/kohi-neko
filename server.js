@@ -5,10 +5,6 @@ const app = require('./app');
 const { frontendURL } = require('./utils/appConstant');
 const bookingService = require('./services/bookingService');
 
-const updateAllBookingStatus = async () => {
-  await bookingService.updateAllBookingStatus();
-};
-updateAllBookingStatus();
 app.use(cors({ origin: frontendURL }));
 dotenv.config({ path: './config.env' });
 const port = process.env.PORT || 8000;
@@ -21,6 +17,9 @@ const DB = process.env.DATABASE_URI.replace(
 mongoose
   .connect(DB)
   .then(() => console.log('DB connection successful!'))
+  .then(async () => {
+    await bookingService.updateAllBookingStatus();
+  })
   .catch((err) => console.log(err));
 
 app.listen(port, () => {
