@@ -35,7 +35,7 @@ const testRouter = require('./routes/testRouter');
 const areaStaffRouter = require('./routes/areaStaffRouter');
 const otpRouter = require('./routes/otpRouter');
 const adminRouter = require('./routes/adminRouter');
-
+const cronRouter = require('./routes/cron');
 const app = express();
 
 // view engine setup
@@ -69,6 +69,7 @@ schedule.scheduleJob(cronExpress, async () => {
   console.log(new Date(newDate).toLocaleString());
   await bookingService.updateAllBookingStatus();
 });
+app.use('/cronjob', cronRouter);
 app.use('/admin', adminRouter);
 app.use('/otp', otpRouter);
 app.use('/test', testRouter);
