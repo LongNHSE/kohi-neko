@@ -1,10 +1,8 @@
-const bookingService = require('../services/bookingService');
+// const express = require('express');
 
-async function handler(req, res) {
-  console.log('Cron job running');
-  const newDate = new Date().getTime();
-  console.log(new Date(newDate).toLocaleString());
-  await bookingService.updateAllBookingStatus();
+// const router = express.Router();
+// const bookingService = require('../services/bookingService');
+
+export default function handler(req, res) {
+  res.status(200).end('Hello Cron!');
 }
-
-module.exports = handler;
