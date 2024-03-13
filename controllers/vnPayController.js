@@ -84,6 +84,7 @@ exports.createPaymentUrl = async (req, res) => {
   const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
   vnpParams.vnp_SecureHash = signed;
   vnpUrl += `?${querystring.stringify(vnpParams, { encode: false })}`;
+  console.log(vnpUrl);
   res
     .status(200)
     .send(ApiResponse.success('Get payment url successfully', vnpUrl));

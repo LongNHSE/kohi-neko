@@ -1,22 +1,24 @@
 const coffeeShopService = require('../services/coffeeShopService');
 const catchAsync = require('../utils/catchAsync/catchAsync');
-const AppError = require('../utils/appError');
 const ApiResponse = require('../dto/ApiResponse');
 const { upload } = require('../utils/firebaseDB');
 
 exports.saveCoffeeShop = catchAsync(async (req, res, next) => {
   const { openTime } = req.body;
+
   if (openTime) {
-    openTime.filter((element) => {
-      if (!element.day || element.openHour || !element.closeHour) return false;
-      return true;
-    });
-    openTime.forEach((element) => {
-      if (element.openHour >= element.closeHour) {
-        return next(
-          new AppError('closeHour must be greater than openHour', 400),
-        );
-      }
+    req.body.openTime = openTime.filter((element) => {
+      console.log(element);
+      return (
+        element.day !== null &&
+        element.openHour !== null &&
+        element.closeHour !== null &&
+        /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/.test(
+          element.day,
+        ) &&
+        /^(0?[1-9]|1[0-2]):[0-5][0-9]\s([APap][mM])$/.test(element.openHour) &&
+        /^(0?[1-9]|1[0-2]):[0-5][0-9]\s([APap][mM])$/.test(element.closeHour)
+      );
     });
   }
   if (openTime && openTime[0].day === 'All days') {
@@ -126,6 +128,23 @@ exports.deleteCoffeeShopById = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCoffeeShopById = catchAsync(async (req, res, next) => {
+  const { openTime } = req.body;
+
+  if (openTime) {
+    req.body.openTime = openTime.filter((element) => {
+      console.log(element);
+      return (
+        element.day !== null &&
+        element.openHour !== null &&
+        element.closeHour !== null &&
+        /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/.test(
+          element.day,
+        ) &&
+        /^(0?[1-9]|1[0-2]):[0-5][0-9]\s([APap][mM])$/.test(element.openHour) &&
+        /^(0?[1-9]|1[0-2]):[0-5][0-9]\s([APap][mM])$/.test(element.closeHour)
+      );
+    });
+  }
   const coffeeShop = await coffeeShopService.updateCoffeeShopById(
     req.params.id,
     req.body,

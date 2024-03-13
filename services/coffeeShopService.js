@@ -184,7 +184,7 @@ exports.approveCoffeeShop = async (id, approve) => {
   if (approve === true) {
     coffeeShop.status = coffeeShopStatus.AVAILABLE;
   } else {
-    coffeeShop.status = coffeeShopStatus.REJECTED;
+    coffeeShop.status = coffeeShopStatus.UNAVAILABLE;
   }
   return coffeeShop.save();
 };

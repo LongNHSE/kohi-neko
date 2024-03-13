@@ -112,7 +112,7 @@ passport.use(
       console.log(profile.emails[0].value);
       const user = await User.findOne({
         email: profile.emails[0].value,
-      });
+      }).populate('coffeeShopId');
       console.log(user, 'oauth');
       if (user) {
         cb(null, user);
