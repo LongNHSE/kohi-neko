@@ -1,1 +1,1 @@
-exports.frontendURL = 'http://localhost:5173';
+exports.frontendURL = 'https://kohineko.vercel.app';
