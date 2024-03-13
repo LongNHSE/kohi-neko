@@ -58,7 +58,7 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-bookingService.updateAllBookingStatus();
+// bookingService.updateAllBookingStatus();
 
 const cronExpress = '0,30 * * * *';
 schedule.scheduleJob(cronExpress, () => {
