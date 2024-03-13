@@ -45,9 +45,12 @@ exports.getCatByAreaId = catchAsync(async (req, res) => {
 
 exports.searchCat = catchAsync(async (req, res) => {
   const coffeeShopId = req.params.id;
-  const { keyword, areaId, status } = req.query;
+  const { name, origin, description, favorite, areaId, status } = req.query;
   const cats = await catService.searchCat(
-    keyword,
+    name,
+    origin,
+    description,
+    favorite,
     coffeeShopId,
     areaId,
     status,

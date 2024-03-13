@@ -14,6 +14,18 @@ const areaSchema = new mongoose.Schema(
       type: [ImageSchema],
       required: false,
     },
+    areaCats: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'area_cats',
+      },
+    ],
+    areaStaffs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'area_staffs',
+      },
+    ],
     isChildAllowed: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
   },

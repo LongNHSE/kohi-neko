@@ -9,6 +9,9 @@ const itemController = require('../controllers/itemController');
 //   .post(itemController.saveItem);
 
 itemRouter
+  .route('/search/coffeeShops/:coffeeShopId')
+  .get(itemController.searchItem);
+itemRouter
   .route('/:id')
   .get(itemController.getItemById)
   .delete(itemController.deleteItem)

@@ -67,47 +67,58 @@ exports.getCatById = (id) =>
     // })
     .populate('coffeeShopId');
 
-exports.searchCat = (keyword, coffeeShopId, areaId, status) => {
-  if (keyword === undefined) keyword = '';
-  if (coffeeShopId === undefined) coffeeShopId = '';
-  if (areaId === undefined) areaId = '';
-  if (status === undefined) status = '';
-  console.log('keyword', keyword);
-  console.log('coffeeShopId', coffeeShopId);
-  console.log('areaId', areaId);
-  console.log('status', status);
-  return (
-    catModel
-      .find({
-        $or: [
-          {
-            $or: [
-              { name: { $regex: keyword || '', $options: 'i' } },
-              { origin: { $regex: keyword || '', $options: 'i' } },
-              { description: { $regex: keyword || '', $options: 'i' } },
-              { favorite: { $regex: keyword || '', $options: 'i' } },
-            ],
-          },
-          { $expr: { $eq: [keyword, ''] } },
-        ],
-        $and: [
-          { $or: [{ coffeeShopId }, { $expr: { $eq: [coffeeShopId, ''] } }] },
-        ],
-        isDeleted: false,
-      })
-      // .populate({
-      //   path: 'catStatus',
-      //   select: 'statusId',
-      //   options: { sort: { createdAt: -1 } },
-      //   populate: { path: 'statusId', select: 'name' },
-      // })
-      .populate({
-        path: 'areaCats',
-        select: 'startTime endTime areaId',
-        options: { sort: { startTime: -1 } },
-        populate: { path: 'areaId', select: 'name isChildAllowed' },
-      })
-  );
+exports.searchCat = async (
+  name,
+  origin,
+  description,
+  favorite,
+  coffeeShopId,
+  areaId,
+  status,
+) => {
+  const query = {
+    isDeleted: false,
+  };
+
+  if (name) query.name = { $regex: name, $options: 'i' };
+  if (origin) query.origin = { $regex: origin, $options: 'i' };
+  if (description) query.description = { $regex: description, $options: 'i' };
+  if (favorite) query.favorite = { $regex: favorite, $options: 'i' };
+  // query.$or = [
+  //   { name: { $regex: name || '', $options: 'i' } },
+  //   { origin: { $regex: origin || '', $options: 'i' } },
+  //   { description: { $regex: description || '', $options: 'i' } },
+  //   { favorite: { $regex: favorite || '', $options: 'i' } },
+  // ];
+
+  if (coffeeShopId) {
+    query.coffeeShopId = coffeeShopId;
+  }
+  if (status) {
+    query.status = status;
+  }
+
+  const cats = await catModel.find(query).populate({
+    path: 'areaCats',
+    select: 'startTime endTime areaId',
+    options: { sort: { startTime: -1 } },
+    populate: { path: 'areaId', select: 'name isChildAllowed' },
+  });
+  if (areaId) {
+    return cats.filter((cat) => {
+      for (let i = 0; i < cat.areaCats.length; i += 1) {
+        const areaCat = cat.areaCats[i];
+        console.log(areaCat.areaId._id.toString());
+        console.log(areaId);
+        if (areaCat.areaId._id.toString() === areaId) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+
+  return cats;
 };
 
 exports.getCatByAreaId = async (coffeeShopId, areaId) => {
@@ -121,7 +132,6 @@ exports.getCatByAreaId = async (coffeeShopId, areaId) => {
       const areaCat = cat.areaCats[i];
       if (
         areaCat.areaId.toString() === areaId &&
-        areaCat.isDeleted === false &&
         areaCat.startTime <= now &&
         (areaCat.endTime >= now || areaCat.endTime === null)
       ) {

@@ -9,49 +9,57 @@ exports.getAllPackageSubscriptions = () =>
 exports.getPackageSubscriptionById = (id) =>
   packageSubscriptionModel.findOne({ _id: id, isDeleted: false });
 
-exports.createPackageSubscription = async (packageSubscription, user) => {
+exports.createPackageSubscription = async (packageId, coffeeShopId) => {
+  console.log(packageId, 'packageId');
+  //check if package exists
+  const package = await packageService.getPackageById(packageId);
+  if (!package) throw new AppError('Package is not found with that ID', 400);
+  const packageSubscription = {
+    packageId,
+  };
+
+  console.log(packageSubscription);
   const lastestSub = await packageSubscriptionModel
-    .find({ isDeleted: false })
+    .find({ coffeeShopId, isDeleted: false })
     .sort({ endTime: -1 })
     .limit(1);
 
-  //check if package exists
-  const package = await packageService.getPackageById(
-    packageSubscription.packageId,
-  );
-  if (!package) throw new AppError('Package not found', 404);
-
-  //check if user has a coffee shop
-  const coffeeShop = await coffeeShopService.getCoffeeShopById(
-    user.coffeeShopId,
-  );
+  console.log(coffeeShopId, 'coffeeShopId');
+  // const coffeeShopIdFromUser = req.
+  // check if user has a coffee shop
+  const coffeeShop = await coffeeShopService.getCoffeeShopById(coffeeShopId);
   if (!coffeeShop) throw new AppError('User has no coffee shop', 404);
+  packageSubscription.coffeeShopId = coffeeShopId;
 
   //startTime
   let startTime = Date.now();
   if (lastestSub.length > 0 && lastestSub[0].endTime > Date.now()) {
     startTime = lastestSub[0].endTime;
   }
-  packageSubscription.startTime = startTime;
+  packageSubscription.startTime = new Date(startTime); // Convert to Date object
 
   //endTime
-  const durationMilis = package.duration * 24 * 60 * 60 * 1000;
-  packageSubscription.endTime = new Date();
-  packageSubscription.endTime.setTime(
-    packageSubscription.startTime.getTime() + durationMilis,
+  packageSubscription.endTime = new Date(packageSubscription.startTime);
+  packageSubscription.endTime.setDate(
+    packageSubscription.startTime.getDate() + package.duration,
   );
-
-  packageSubscription.coffeeShopId = user.coffeeShopId;
   return packageSubscriptionModel.create(packageSubscription);
 };
 
 exports.getCurrentPackageSubscriptionByCoffeeShopId = (coffeeShopId) =>
-  packageSubscriptionModel.findOne({
-    coffeeShopId,
-    startTime: { $lte: Date.now() },
-    endTime: { $gte: Date.now() },
-    isDeleted: false,
-  });
+  packageSubscriptionModel
+    .findOne({
+      coffeeShopId,
+      startTime: { $lte: Date.now() },
+      endTime: { $gte: Date.now() },
+      isDeleted: false,
+    })
+    .populate('packageId');
+exports.isCurrentPackageSubscription = async (coffeeShopId) => {
+  const currentPackageSubscription =
+    await this.getCurrentPackageSubscriptionByCoffeeShopId(coffeeShopId);
+  return !!currentPackageSubscription;
+};
 
 exports.updatePackageSubscription = (id, packageSubscription) =>
   packageSubscriptionModel.findByIdAndUpdate(id, packageSubscription, {
@@ -80,8 +88,10 @@ exports.getPackageSubscriptionByCoffeeShopIdAndPackageId = (
   packageId,
   coffeeShopId,
 ) =>
-  packageSubscriptionModel.find({
-    coffeeShopId,
-    packageId,
-    isDeleted: false,
-  });
+  packageSubscriptionModel
+    .find({
+      coffeeShopId,
+      packageId,
+      isDeleted: false,
+    })
+    .populate('packageId');

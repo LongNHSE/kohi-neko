@@ -77,6 +77,7 @@ const userSchema = new mongoose.Schema(
       ],
       required: [true, 'An user must have a email'],
       unique: true,
+      lowercase: true,
     },
     avatar: {
       type: String,
@@ -112,6 +113,7 @@ const userSchema = new mongoose.Schema(
     passwordResetToken: String,
     passwordResetTokenExpires: Date,
     passwordChangedAt: Date,
+    areaStaffs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'area_staffs' }],
     isDeleted: {
       type: Boolean,
       default: false,

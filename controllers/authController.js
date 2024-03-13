@@ -12,7 +12,7 @@ const ApiResponse = require('../dto/ApiResponse');
 const AppError = require('../utils/appError');
 const tokenBlacklist = require('../models/tokenBlackListModel');
 const User = require('../models/userModel');
-const { frontendURL } = require('../utils/urlConstant');
+const { frontendURL } = require('../utils/appConstant');
 
 exports.login = catchAsync(async (req, res, next) => {
   const { username, password } = req.body;
@@ -62,7 +62,6 @@ exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
   if (!token) return next(new AppError('Please login to get access', 401));
   token = token.replace('Bearer ', '');
   const isBlacklisted = await tokenBlacklist.find({ token });
-  console.log(isBlacklisted, 'isBlacklisted');
   if (isBlacklisted.length > 0 && isBlacklisted[0]) {
     return next(
       new AppError('This token has been blacklisted. Please login again.', 401),
@@ -70,9 +69,7 @@ exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
   }
   let decoded;
   try {
-    console.log(token, 'token');
     decoded = jwt.decode(token, process.env.ACCESS_TOKEN_SECRET);
-    console.log(decoded, 'decoded');
   } catch (err) {
     return next(new AppError('Error decoding token', 400));
   }
@@ -108,22 +105,20 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `http://localhost:5173/login`,
+      callbackURL: `${frontendURL}/login`,
       scope: ['email', 'profile'],
     },
     async (accessToken, refreshToken, profile, cb) => {
-      console.log(profile);
-      const user = await User.findOne({ email: profile.emails[0].value });
+      console.log(profile.emails[0].value);
+      const user = await User.findOne({
+        email: profile.emails[0].value,
+      });
       console.log(user, 'oauth');
       if (user) {
-        user.accessToken = accessToken;
-        user.refeshToken = refreshToken;
+        cb(null, user);
+      } else {
+        cb(new AppError('Email not sign up', 200), null);
       }
-      cb(null, user);
-
-      profile.accessToken = accessToken;
-      profile.refreshToken = refreshToken;
-      cb(null, profile);
     },
   ),
 );
@@ -137,6 +132,7 @@ passport.deserializeUser((user, done) => {
 });
 
 exports.googleLogin = catchAsync((req, res, next) => {
+  req.session = null; // Clear the session cookie
   passport.authenticate('google', {
     session: 'false',
     scope: ['email', 'profile'],
@@ -148,16 +144,30 @@ exports.googleLoginCallback = passport.authenticate('google', {
   // successRedirect: `${frontendURL}`,
 });
 
-exports.googleLoginSuccess = (req, res) => {
+exports.googleLoginSuccess = catchAsync(async (req, res) => {
   if (req.user) {
+    const accessToken = authService.generateAccessToken(req.user);
+    const refeshToken = await authService.refeshToken(req.user);
+    //Refresh refeshToken
+    await tokenBlackListService.saveToken(refeshToken);
     res.status(200).json(
       new ApiResponse(200, 'Google login successfully', {
-        accessToken: req.user.accessToken,
+        accessToken: accessToken,
         user: req.user,
       }),
     );
+  } else {
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          401,
+          'Email has not been linked to any account! Please sign up',
+          null,
+        ),
+      );
   }
-};
+});
 
 exports.googleLoginFailure = (req, res) => {
   // Handle failure redirect in the client-side code

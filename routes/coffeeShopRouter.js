@@ -16,11 +16,23 @@ coffeeShopRouter
   .route('/my')
   .get(
     authMiddleware.verifyToken,
-    authMiddleware.restrictTo(constant.SHOP_MANAGER),
+    authMiddleware.restrictTo(
+      constant.SHOP_MANAGER,
+      constant.ADMIN_ROLE,
+      constant.STAFF_ROLE,
+    ),
     coffeeShopController.getCoffeeShopByUserId,
   );
+coffeeShopRouter.get('/:id/staffs/search', userController.searchStaffsByShopId);
 coffeeShopRouter.get('/:id/staffs', userController.getAllStaffsByShopId);
-coffeeShopRouter.post('/:id/staffs', userController.createUser);
+coffeeShopRouter.post(
+  '/:id/staffs',
+  authMiddleware.verifyToken,
+  userController.createStaff,
+);
+coffeeShopRouter
+  .route('/:id/approval')
+  .patch(coffeeShopController.approveCoffeeShop);
 coffeeShopRouter
   .route('/:id')
   .get(coffeeShopController.getCoffeeShopById)
@@ -50,6 +62,11 @@ coffeeShopRouter
 coffeeShopRouter
   .route('/total/count')
   .get(coffeeShopController.getTotalsCoffeeShops);
+
+coffeeShopRouter.get(
+  '/total/active',
+  coffeeShopController.getAllActiveCoffeeShops,
+);
 
 coffeeShopRouter.use('/:coffeeShopId/bookings', bookingRouter.router);
 

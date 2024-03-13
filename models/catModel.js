@@ -40,6 +40,12 @@ const catSchema = new mongoose.Schema(
     dateOfBirth: {
       type: Date,
       required: [true, 'cat required a dateOfBirth'],
+      validate: {
+        validator: function (value) {
+          return value < new Date();
+        },
+        message: 'Date of birth must be in the past',
+      },
     },
     gender: {
       type: String,

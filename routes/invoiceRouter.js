@@ -11,6 +11,11 @@ router
   .all(authMiddleware.verifyToken)
   .get(Invoice.getInvoiceByBookingIds)
   .post(Invoice.createInvoice);
+
+router
+  .route('/bookings/:bookingId')
+  .all(authMiddleware.verifyToken)
+  .post(Invoice.createInvoice);
 router
   .route('/payment')
   .post(authMiddleware.verifyToken, Invoice.purchaseInvoices);

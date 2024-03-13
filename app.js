@@ -32,6 +32,9 @@ const packageRouter = require('./routes/packageRouter');
 const packageSubscriptionRouter = require('./routes/packageSubscriptionRouter');
 const uploadRouter = require('./routes/uploadRouter');
 const testRouter = require('./routes/testRouter');
+const areaStaffRouter = require('./routes/areaStaffRouter');
+const otpRouter = require('./routes/otpRouter');
+const adminRouter = require('./routes/adminRouter');
 
 const app = express();
 
@@ -54,6 +57,7 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+bookingService.updateAllBookingStatus();
 
 const cronExpress = '0,30 * * * *';
 schedule.scheduleJob(cronExpress, () => {
@@ -62,6 +66,8 @@ schedule.scheduleJob(cronExpress, () => {
   console.log(new Date(newDate).toLocaleString());
   bookingService.updateAllBookingStatus();
 });
+app.use('/admin', adminRouter);
+app.use('/otp', otpRouter);
 app.use('/test', testRouter);
 app.use('/', indexRouter);
 app.use('/auth', authRouter.router);
@@ -85,6 +91,7 @@ app.use('/packageSubscriptions', packageSubscriptionRouter.router);
 app.use('/bookings', bookingRouter.router);
 app.use('/image', uploadRouter.router);
 app.use(vnPayRouter.path, vnPayRouter.router);
+app.use(areaStaffRouter.router);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

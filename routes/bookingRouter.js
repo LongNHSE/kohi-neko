@@ -54,7 +54,20 @@ router
     bookingController.refundBooking,
   );
 
-router.route('/coffeeShop?').get(bookingController.getBookingByCoffeeShopId);
+router
+  .route('/coffeeShop/data?')
+  .get(
+    authMiddleware.verifyToken,
+    authMiddleware.restrictTo(constant.SHOP_MANAGER, constant.STAFF_ROLE),
+    bookingController.getBookingByCoffeeShopId,
+  );
+router
+  .route('/coffeeShop/data/count?')
+  .get(
+    authMiddleware.verifyToken,
+    authMiddleware.restrictTo(constant.SHOP_MANAGER, constant.STAFF_ROLE),
+    bookingController.getTotalBookingByCoffeeShopId,
+  );
 
 exports.router = router;
 exports.path = '/bookings';

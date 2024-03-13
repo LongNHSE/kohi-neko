@@ -38,3 +38,20 @@ exports.getAllTableByTableTypeAndByAreaId = (tableTypeId, areaId) =>
       select: 'name -_id price',
     })
     .select('_id');
+
+// create table by area and table type
+exports.createTableByAreaAndTableType = (areaId, tableTypeId, quantity) => {
+  const tables = [];
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0; i < quantity; i++) {
+    tables.push({
+      areaId: areaId,
+      tableTypeId: tableTypeId,
+    });
+  }
+  return tableModel.create(tables);
+};
+
+// get all tables by area id
+exports.getAllTableByAreaId = (areaId) =>
+  tableModel.find({ areaId, isDeleted: false });

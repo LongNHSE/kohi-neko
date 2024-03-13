@@ -3,16 +3,18 @@ const catchAsync = require('../utils/catchAsync/catchAsync');
 const ApiResponse = require('../dto/ApiResponse');
 const BookingService = require('../services/bookingService');
 
-// create invoice
+// create invoice and purchased by cash
 exports.createInvoice = catchAsync(async (req, res) => {
-  // console.log(req.params, req.body);
-  // console.log(req.params, req.body, req.user);
-  const { bookingId, coffeeShopId } = req.params;
+  const { bookingId } = req.params;
   const invoice = req.body;
-  invoice.userId = req.user._id;
-  invoice.coffeeShopId = coffeeShopId;
+  invoice.staffId = req.user._id;
+  invoice.coffeeShopId = req.user.coffeeShopId;
   invoice.bookingId = bookingId;
+  invoice.status = 'paid';
 
+  // const booking = await BookingService.getBookingById(bookingId);
+  // console.log(booking);
+  // invoice.userId = booking.customerId;
   const invoiceResult = await InvoiceService.createInvoice(invoice);
   if (invoiceResult) {
     await BookingService.updateInvoiceBooking(invoiceResult);
@@ -49,6 +51,7 @@ exports.getInvoiceById = catchAsync(async (req, res) => {
 exports.purchaseInvoices = catchAsync(async (req, res) => {
   const { bookingId, coffeeShopId } = req.params;
   const invoice = req.body;
+  console.log(invoice);
   invoice.userId = req.user._id;
   invoice.coffeeShopId = coffeeShopId;
   invoice.bookingId = bookingId;

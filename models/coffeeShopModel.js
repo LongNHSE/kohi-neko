@@ -24,6 +24,18 @@ const coffeeShopSchema = new mongoose.Schema(
           closeHour: {
             type: String,
             required: true,
+            //   validate: {
+            //     validator: function (value) {
+            //       const open =
+            //         Number.parseInt(this.openHour.slice(0, 1), 10) +
+            //         Number.parseInt(this.openHour.slice(2, 3), 10) * 0.1;
+            //       const close =
+            //         Number.parseInt(value.slice(0, 1), 10) +
+            //         Number.parseInt(value.slice(2, 3), 10) * 0.1;
+            //       return close > open;
+            //     },
+            //     message: 'closeHour must be greater than openHour',
+            //   },
           },
         },
       ],
@@ -49,7 +61,7 @@ const coffeeShopSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['available', 'unavailable'],
+      enum: ['available', 'unavailable', 'rejected'],
       default: 'unavailable',
     },
     // owner: {

@@ -5,7 +5,10 @@ const { uploadImage } = require('../utils/firebaseDB');
 const { Table } = require('../models/tableModel');
 
 exports.getAllAreas = (coffeeShopId) =>
-  areaModel.find({ isDeleted: false, coffeeShopId });
+  areaModel.find({
+    isDeleted: false,
+    coffeeShopId,
+  });
 
 exports.getAreaById = (id) =>
   areaModel.findOne({ _id: id, isDeleted: false }).populate('coffeeShopId');
@@ -47,7 +50,7 @@ exports.getTableTypesInArea = async (id) => {
   const areaId = new mongoose.Types.ObjectId(id);
   const result = await Table.aggregate([
     {
-      $match: { areaId },
+      $match: { areaId, isDeleted: false },
     },
     {
       $group: {
@@ -79,7 +82,7 @@ exports.getTableTypesInArea = async (id) => {
       },
     },
   ]);
-
+  // console.log(result);
   return result;
   // Extract tableType values from the result
   // return result;

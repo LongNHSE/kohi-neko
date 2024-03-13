@@ -10,8 +10,8 @@ const sendEmail = async (options) => {
     port: process.env.EMAIL_PORT || '465',
     // secure: false,
     auth: {
-      user: process.env.EMAIL_USERNAME || 'thekohineko00@gmail.com',
-      pass: process.env.EMAIL_PASSWORD || 'drmkskalukbjipip',
+      user: process.env.EMAIL_USERNAME || 'thekohineko001@gmail.com',
+      pass: process.env.EMAIL_PASSWORD || 'bsbnntdqjkmnkpvh',
     },
 
     // gmailPassword: process.env.GMAIL_PASSWORD || 'drmk skal ukbj ipip',

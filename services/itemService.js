@@ -4,6 +4,26 @@ const { uploadImage } = require('../utils/firebaseDB');
 const AppError = require('../utils/appError');
 const CoffeeShop = require('../models/coffeeShopModel');
 
+exports.searchItem = async (coffeeShopId, name, description) => {
+  const items = await CoffeeShop.findById(coffeeShopId)
+    .populate({
+      path: 'items',
+      match: { isDeleted: false },
+      select: '-__v -createdAt -updatedAt -coffeeShopId',
+      populate: {
+        path: 'itemTypeId',
+        select: 'itemTypeName -_id',
+      },
+    })
+    .select('items');
+  const itemArr = items.items;
+  if (!name) return itemArr;
+  const regex = new RegExp(name || '', 'i');
+  const regex2 = new RegExp(description || '', 'i');
+  return itemArr.filter(
+    (item) => regex.test(item.name) && regex2.test(item.description),
+  );
+};
 exports.saveItem = (item) => {
   const newItem = new Item(item);
   return newItem.save();

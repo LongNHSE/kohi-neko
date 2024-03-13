@@ -55,12 +55,14 @@ exports.saveCoffeeShop = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllCoffeeShops = catchAsync(async (req, res, next) => {
-  const { page, perPage, key, sort } = req.query;
+  const { page, perPage, key, sort, city, district } = req.query;
   const coffeeShops = await coffeeShopService.getAllCoffeeShops(
     page,
     sort,
     key,
     perPage,
+    city,
+    district,
   );
   res
     .status(200)
@@ -68,6 +70,22 @@ exports.getAllCoffeeShops = catchAsync(async (req, res, next) => {
       ApiResponse.success('Get all coffee shops successfully', coffeeShops),
     );
 });
+
+exports.getAllCoffeeShopsByAdmin = catchAsync(async (req, res, next) => {
+  let { key, sort } = req.query;
+
+  if (key === undefined || sort === undefined) {
+    key = '';
+    sort = 1;
+  }
+  const coffeeShops = await coffeeShopService.getAllCoffeeShopsByAdmin(key);
+  res
+    .status(200)
+    .send(
+      ApiResponse.success('Get all coffee shops successfully', coffeeShops),
+    );
+});
+
 exports.getCoffeeShopById = catchAsync(async (req, res, next) => {
   const coffeeShop = await coffeeShopService.getCoffeeShopById(req.params.id);
   res
@@ -129,7 +147,6 @@ exports.getCoffeeShopOpenTimeAndCloseTime = catchAsync(
         req.params.id,
         req.body.date,
       );
-    console.log(coffeeShop, 'coffeeShop');
     res
       .status(200)
       .send(
@@ -147,4 +164,26 @@ exports.getTotalsCoffeeShops = catchAsync(async (req, res, next) => {
   res
     .status(200)
     .send(ApiResponse.success('Get totals coffee shops successfully', totals));
+});
+
+exports.approveCoffeeShop = catchAsync(async (req, res, next) => {
+  const coffeeShop = await coffeeShopService.approveCoffeeShop(
+    req.params.id,
+    req.body.approve,
+  );
+  res
+    .status(200)
+    .send(ApiResponse.success('Approve coffee shop successfully', coffeeShop));
+});
+
+exports.getAllActiveCoffeeShops = catchAsync(async (req, res, next) => {
+  const coffeeShops = await coffeeShopService.getAllActiveCoffeeShops();
+  res
+    .status(200)
+    .send(
+      ApiResponse.success(
+        'Get all active coffee shops successfully',
+        coffeeShops,
+      ),
+    );
 });

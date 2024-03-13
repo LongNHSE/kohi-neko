@@ -45,12 +45,21 @@ const getHoursForDay = (openTimeArray, day) => {
     : null;
 };
 
-const getAvailableTables = async (startTime, endTime, tableTypeId, areaId) => {
+//get available tables in area
+const getAvailableTables = async (
+  startTime,
+  endTime,
+  tableTypeId,
+  areaId,
+  coffeeShopId,
+) => {
   const bookingInDate = await BookingService.getAllBookingInDate(
     startTime,
     endTime,
+    coffeeShopId,
   );
   const bookedTables = bookingInDate.map((booking) => booking.tableId);
+  console.log(bookedTables, 'bookedTables');
   // const tableType =
   //   await TableTypeService.getTableTypeByNumberOfPeople(numberOfPeople);
   // // console.log(tableType);
@@ -61,6 +70,7 @@ const getAvailableTables = async (startTime, endTime, tableTypeId, areaId) => {
     tableTypeId,
     areaId,
   );
+  console.log(tables, bookedTables, 'tables');
   return tables.filter(
     (table) => !bookedTables.toString().includes(table._id.toString()),
   );
@@ -98,6 +108,7 @@ const getAvailableTimes = async (
       endTime,
       tableTypeId,
       areaId,
+      coffeeShopId,
     );
     if (availableTables.length > 0) {
       slotTime.push({
@@ -206,11 +217,13 @@ exports.createBooking = catchAsync(async (req, res, next) => {
     }
   }
   const numberOfPeople = req.body.adult + req.body.children;
+  //Available tables in area
   const availableTables = await getAvailableTables(
     startTime,
     endTime,
     tableTypeId,
     areaId,
+    req.body.area.coffeeShopId,
   );
   if (availableTables.length === 0) {
     return next(
@@ -341,6 +354,41 @@ exports.getBookingById = catchAsync(async (req, res, next) => {
 //     .send(ApiResponse.success('Purchase booking successfully', bookingResult));
 // });
 
+exports.createBookings = catchAsync(async (req, res, next) => {
+  const booking = {
+    coffeeShopId: req.body.booking.coffeeShopId._id,
+    tableId: req.body.booking.tableId._id,
+    startTime: req.body.booking.startTime,
+    endTime: req.body.booking.endTime,
+    numberOfPeople: req.body.booking.numberOfPeople,
+  };
+  booking.customerId = req.user._id;
+
+  booking.status = 'unpaid';
+  let bookingResult = await BookingService.createBooking(booking);
+  if (req.body.invoiceItems) {
+    let invoice = {
+      userId: req.user._id,
+      coffeeShopId: bookingResult.coffeeShopId._id,
+      bookingId: bookingResult._id,
+      invoiceItems: req.body.invoiceItems.map((item) => ({
+        itemId: item._id,
+        quantity: item.quantity,
+      })),
+      status: 'unpaid',
+    };
+    invoice = await invoiceService.createInvoice(invoice);
+
+    bookingResult = await BookingService.updateInvoiceBooking(invoice);
+  }
+  res
+    .status(200)
+    .send(ApiResponse.success('Create booking successfully', bookingResult));
+  // res
+  //   .status(200)
+  //   .send(ApiResponse.success('Purchase booking successfully', bookingResult));
+});
+
 exports.purchaseBooking = catchAsync(async (req, res, next) => {
   const booking = {
     coffeeShopId: req.body.booking.coffeeShopId._id,
@@ -384,13 +432,14 @@ exports.refundBooking = catchAsync(async (req, res, next) => {
 });
 
 exports.getBookingByUserId = catchAsync(async (req, res, next) => {
-  const { page, perPage, bookingStatus, sort } = req.query;
+  const { page, perPage, bookingStatus, sort, key } = req.query;
   const bookings = await BookingService.getBookingByUserId(
     req.user._id,
     page,
     perPage,
     bookingStatus,
     sort,
+    key,
   );
   bookings.map((booking) => {
     let allInvoicesPrice = 0;
@@ -435,16 +484,18 @@ exports.purchaseBookingByUserWallet = catchAsync(async (req, res, next) => {
 });
 
 exports.getTotalBookingByUserId = catchAsync(async (req, res, next) => {
-  const { status } = req.query;
-  console.log(req.user._id, status);
+  const { status, key } = req.query;
   const total = await BookingService.getTotalBookingByUserId(
     req.user._id,
     status,
+    key,
   );
+  const result = total[0].count;
+
   res
     .status(200)
     .send(
-      ApiResponse.success('Get total booking by user id successfully', total),
+      ApiResponse.success('Get total booking by user id successfully', result),
     );
 });
 
@@ -466,14 +517,40 @@ exports.changeBookingStatus = catchAsync(async (req, res, next) => {
 });
 
 exports.getBookingByCoffeeShopId = catchAsync(async (req, res, next) => {
-  const { page, perPage, bookingStatus, sort } = req.query;
+  const { page, perPage, bookingStatus, sort, key } = req.query;
+  const { coffeeShopId } = req.user;
+  // console.log(req.user.coffeeShopId);
+  // console.log(coffeeShopId);
   const bookings = await BookingService.getBookingByCoffeeShopId(
-    req.query.coffeeShopId,
+    coffeeShopId,
     page,
     perPage,
     bookingStatus,
     sort,
+    key,
   );
+  // console.log(bookings);
+  res
+    .status(200)
+    .send(
+      ApiResponse.success(
+        'Get booking by coffee shop id successfully',
+        bookings,
+      ),
+    );
+});
+
+exports.getTotalBookingByCoffeeShopId = catchAsync(async (req, res, next) => {
+  const { bookingStatus, key } = req.query;
+  const { coffeeShopId } = req.user;
+  // console.log(req.user.coffeeShopId);
+  // console.log(coffeeShopId);
+  const bookings = await BookingService.getTotalBookingByCoffeeShopId(
+    coffeeShopId,
+    bookingStatus,
+    key,
+  );
+  // console.log(bookings);
   res
     .status(200)
     .send(

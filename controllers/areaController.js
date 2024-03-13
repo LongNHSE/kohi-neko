@@ -1,11 +1,30 @@
 const areaService = require('../services/areaService');
 const catchAsync = require('../utils/catchAsync/catchAsync');
 const { upload } = require('../utils/firebaseDB');
+const BookingService = require('../services/bookingService');
 const ApiResponse = require('../dto/ApiResponse');
 
+const convertToTime = (timeString) => {
+  const [hours, minutes, seconds] = timeString.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, seconds);
+  return date;
+};
+
 exports.getAllAreas = catchAsync(async (req, res) => {
+  let { keyword } = req.params;
   const { coffeeShopId } = req.params;
-  const areas = await areaService.getAllAreas(coffeeShopId);
+  if (!coffeeShopId) {
+    res
+      .status(400)
+      .send(new ApiResponse(400, 'Coffee shop id is required', null));
+    return;
+  }
+  if (keyword === undefined) {
+    keyword = '';
+  }
+  console.log(coffeeShopId, keyword);
+  const areas = await areaService.getAllAreas(coffeeShopId, keyword);
   res.send(ApiResponse.success('Get all areas successfully', areas));
 });
 
@@ -66,8 +85,49 @@ exports.deleteImage = catchAsync(async (req, res) => {
 });
 
 exports.getTableTypeInArea = catchAsync(async (req, res) => {
+  const { startTime, endTime, date } = req.query;
   const { areaId } = req.params;
+
+  const dateGet = new Date(date);
+  dateGet.setHours(0, 0, 0, 0);
+  const startTimeDate = convertToTime(startTime);
+  const endTimeDate = convertToTime(endTime);
+
+  const startTimeDateInDateTime = dateGet.setHours(
+    startTimeDate.getHours(),
+    startTimeDate.getMinutes(),
+    0,
+    0,
+  );
+
+  const endTimeDateInDateTime = dateGet.setHours(
+    endTimeDate.getHours(),
+    endTimeDate.getMinutes(),
+    0,
+    0,
+  );
+
+  console.log(areaId, startTimeDateInDateTime, endTimeDateInDateTime);
+  const area = await areaService.getAreaById(areaId);
+  const tableBooked = await BookingService.getAllBookingInDateInArea(
+    startTimeDateInDateTime,
+    endTimeDateInDateTime,
+    area,
+    area.coffeeShopId,
+  );
+
   const tableTypes = await areaService.getTableTypesInArea(areaId);
+  tableTypes.forEach((tableType) => {
+    tableType.bookedTable = tableBooked.filter(
+      (booking) =>
+        booking.table &&
+        booking.table.tableTypeId &&
+        booking.table.tableTypeId.toString() ===
+          tableType.tableTypeId.toString(),
+    ).length;
+  });
+  console.log(tableTypes);
+  console.log(tableBooked);
   res.send(
     ApiResponse.success('Get table types in area successfully', tableTypes),
   );

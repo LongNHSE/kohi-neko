@@ -53,9 +53,8 @@ exports.verifyToken = catchAsync(async (req, res, next) => {
       new AppError('User recently changed password! Please login again', 401),
     );
   }
-  // console.log(freshUser, 'freshUser');
+
   req.user = freshUser;
-  console.log(req.user, 'req.user');
   next();
 });
 

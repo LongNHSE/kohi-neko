@@ -1,10 +1,12 @@
+const crypto = require('crypto');
+
+const constant = require('../utils/constant');
 const userService = require('../services/userService');
 // const errorController = require('./errorController');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync/catchAsync');
 const ApiResponse = require('../dto/ApiResponse');
 const coffeeShopService = require('../services/coffeeShopService');
-const constant = require('../utils/constant');
 
 exports.checkBody = (req, res, next) => {
   if (!req.body.name || !req.body.age) {
@@ -94,14 +96,23 @@ exports.createUser = catchAsync(async (req, res, next) => {
 
 exports.createStaff = catchAsync(async (req, res, next) => {
   const user = req.body;
-  const newUser = await userService.createUser(user);
   const shopId = req.params.id;
   const coffeeShop = await coffeeShopService.getCoffeeShopById(shopId);
   if (!coffeeShop) {
     return next(new AppError('Coffee shop not found', 404));
   }
-  user.shopId = shopId;
+  user.coffeeShopId = shopId;
   user.role = constant.STAFF_ROLE;
+  const hashPassword = crypto.randomBytes(16).toString('hex');
+  user.password = hashPassword;
+  user.passwordConfirm = hashPassword;
+  const newUser = await userService.createUser(user);
+  await userService.managerInviteStaff(
+    req.user._id,
+    newUser.email,
+    user.username,
+    hashPassword,
+  );
   res.status(201).send(
     ApiResponse.success('Create staff & send invite mail to  successfully', {
       user: newUser,
@@ -134,8 +145,9 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllUsers = (req, res) => {
+  const { role, name, email, phoneNumber } = req.query;
   userService
-    .getAllUsers()
+    .getAllUsers(role, name, email, phoneNumber)
     .then((users) => {
       res.send(ApiResponse.success('Get all users successfully', users));
     })
@@ -180,10 +192,13 @@ exports.updateUser = catchAsync(async (req, res, next) => {
       data: null,
     });
   }
-  const updatedUser = userService.updateUser(id, data);
+  const updatedUser = await userService.updateUserProfile(id, data);
   if (!updatedUser) {
     return next(new AppError('User not found', 404));
   }
+  res
+    .status(200)
+    .json(ApiResponse.success('Update profile user successfully', updatedUser));
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
@@ -233,6 +248,21 @@ exports.getAllStaffs = catchAsync(async (req, res, next) => {
     .send(ApiResponse.success('Get all staffs successfully', staffs));
 });
 
+exports.searchStaffsByShopId = catchAsync(async (req, res, next) => {
+  const shopId = req.params.id;
+  const { firstName, lastName, email, phoneNumber } = req.query;
+  const staffs = await userService.searchStaffsByShopId(
+    shopId,
+    firstName,
+    lastName,
+    email,
+    phoneNumber,
+  );
+  res
+    .status(200)
+    .send(ApiResponse.success('Search staffs by shop id successfully', staffs));
+});
+
 exports.getAllStaffsByShopId = catchAsync(async (req, res, next) => {
   const shopId = req.params.id;
   const staffs = await userService.getAllStaffsByShopId(shopId);
@@ -246,13 +276,12 @@ exports.getAllStaffsByShopId = catchAsync(async (req, res, next) => {
 exports.managerInviteStaff = catchAsync(async (req, res, next) => {
   const managerId = req.user._id;
   const { email } = req.body;
-  const manager = await userService.managerInviteStaff(managerId, email);
-  if (!manager) {
-    return next(new AppError('Manager not found', 404));
-  }
+  await userService.managerInviteStaff(managerId, email);
   res
     .status(200)
-    .send(ApiResponse.success('Manager invite staff successfully', manager));
+    .send(
+      ApiResponse.success('Manager send invite mail to staff successfully'),
+    );
 });
 
 exports.getUserWallet = catchAsync(async (req, res, next) => {
@@ -264,4 +293,24 @@ exports.getUserWallet = catchAsync(async (req, res, next) => {
   res
     .status(200)
     .send(ApiResponse.success('Get user wallet successfully', wallet));
+});
+
+exports.isEmailExist = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  if (!email) throw new AppError('Email request body is required', 400);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res
+      .status(400)
+      .send(ApiResponse.error('Invalid email format', email));
+  }
+  const isEmailExist = await userService.getUserByEmail(email);
+  if (isEmailExist) {
+    return res
+      .status(200)
+      .send(ApiResponse.error('Email is existed', isEmailExist));
+  }
+  res
+    .status(200)
+    .send(ApiResponse.success('Email is not existed', isEmailExist));
 });

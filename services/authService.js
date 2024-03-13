@@ -18,14 +18,15 @@ exports.generateAccessToken = (user) =>
   });
 
 exports.login = async (username, password) => {
-  const user = await User.findOne({ username }).select(
-    '+password -refreshToken -passwordResetExpires -__v -createdAt -updatedAt -isDeleted -passwordResetToken -passwordResetTokenExpires -passwordChangedAt',
-  );
-  console.log(password);
-  console.log(user.password);
+  const user = await User.findOne({ username })
+    .select(
+      '+password -refreshToken -passwordResetExpires -__v -createdAt -updatedAt -isDeleted -passwordResetToken -passwordResetTokenExpires -passwordChangedAt',
+    )
+    .populate('coffeeShopId');
   if (!user || !(await user.comparePassword(password, user.password))) {
     return null;
   }
+
   user.password = undefined;
 
   return user;

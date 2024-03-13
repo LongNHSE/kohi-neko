@@ -4,8 +4,9 @@ const userRouter = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const userController = require('../controllers/userController');
 
-/* GET users listing. */
+userRouter.post('/isEmailExist', userController.isEmailExist);
 
+/* GET users listing. */
 userRouter
   .route('/:id')
   .delete(
@@ -33,4 +34,5 @@ userRouter.get(
   authMiddleware.verifyToken,
   userController.getUserWallet,
 );
+
 module.exports = userRouter;

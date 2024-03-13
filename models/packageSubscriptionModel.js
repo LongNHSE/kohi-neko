@@ -19,6 +19,11 @@ const packageSubscriptionSchema = new Schema(
       ref: 'coffeeShops',
       required: true,
     },
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    },
     startTime: {
       type: Date,
       required: true,

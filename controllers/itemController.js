@@ -5,6 +5,13 @@ const AppError = require('../utils/appError');
 const coffeeShopService = require('../services/coffeeShopService');
 const { upload } = require('../utils/firebaseDB');
 
+exports.searchItem = catchAsync(async (req, res, next) => {
+  const { name, description } = req.query;
+  const { coffeeShopId } = req.params;
+  const items = await itemService.searchItem(coffeeShopId, name, description);
+  res.status(200).send(ApiResponse.success('Search item successfully', items));
+});
+
 exports.updateItem = catchAsync(async (req, res, next) => {
   const item = await itemService.updateItemById(req.params.id, req.body);
   if (!item) {

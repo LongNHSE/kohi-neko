@@ -1,25 +1,72 @@
 const { areaCatModel } = require('../models/areaCatModel');
 const catModel = require('../models/catModel');
+const areaModel = require('../models/areaModel');
+const AppError = require('../utils/appError');
 
 exports.getAllAreaCats = () => areaCatModel.find().populate('areaId');
 
-exports.searchAreaCat = (areaId, catId) => {
-  if (!areaId)
-    return areaCatModel
-      .find({ catId })
-      .populate('areaId')
-      .populate('catId')
-      .sort({ startTime: -1 });
-  if (!catId)
-    return areaCatModel
-      .find({ areaId })
-      .populate('areaId')
-      .populate('catId')
-      .sort({ startTime: -1 });
-  return areaCatModel
-    .find({ $and: [{ areaId }, { catId }] })
+const searchAreaCatByCatId = (catId, time) =>
+  areaCatModel
+    .find({
+      $and: [
+        { catId },
+        { startTime: { $lte: time } },
+        { $or: [{ endTime: { $gte: time } }, { endTime: null }] },
+        { isDeleted: false },
+      ],
+    })
+    .populate('areaId')
+    .populate('catId')
+    .sort({ startTime: -1 });
+
+const searchAreaCatByAreaId = (areaId, time) =>
+  areaCatModel
+    .find({
+      $and: [
+        { areaId },
+        { startTime: { $lte: time } },
+        { $or: [{ endTime: { $gte: time } }, { endTime: null }] },
+        { isDeleted: false },
+      ],
+    })
+    .populate('areaId')
+    .populate('catId')
+    .sort({ startTime: -1 });
+
+const searchAreaCatByAreaIdAndCatId = (areaId, catId, time) =>
+  areaCatModel
+    .find({
+      $and: [
+        { areaId },
+        { catId },
+        { startTime: { $lte: time } },
+        { $or: [{ endTime: { $gte: time } }, { endTime: null }] },
+        { isDeleted: false },
+      ],
+    })
     .populate('areaId')
     .sort({ startTime: -1 });
+
+const searchAreaCatByTime = (time) =>
+  areaCatModel
+    .find({
+      $and: [
+        { startTime: { $lte: time } },
+        { $or: [{ endTime: { $gte: time } }, { endTime: null }] },
+        { isDeleted: false },
+      ],
+    })
+    .populate('areaId')
+    .populate('catId')
+    .sort({ startTime: -1 });
+
+exports.searchAreaCat = (areaId, catId, time) => {
+  if (!time) time = Date.now();
+  if (catId && !areaId) return searchAreaCatByCatId(catId, time);
+  if (areaId && !catId) return searchAreaCatByAreaId(areaId, time);
+  if (areaId && catId)
+    return searchAreaCatByAreaIdAndCatId(areaId, catId, time);
+  return searchAreaCatByTime(time);
 };
 
 exports.getAreaCatByAreaIdNow = (areaId) => {
@@ -27,16 +74,13 @@ exports.getAreaCatByAreaIdNow = (areaId) => {
   return areaCatModel
     .find({
       $and: [
-        { 'areaCats.areaId': areaId },
+        { areaId: areaId },
         {
-          'areaCats.isDeleted': false,
+          isDeleted: false,
         },
-        { 'areaCats.startTime': { $lte: now } },
+        { startTime: { $lte: now } },
         {
-          $or: [
-            { 'areaCats.endTime': { $gte: now } },
-            { 'areaCats.endTime': null },
-          ],
+          $or: [{ endTime: { $gte: now } }, { endTime: null }],
         },
       ],
     })
@@ -48,16 +92,13 @@ exports.getAreaCatByCatIdNow = (catId) => {
   return areaCatModel
     .find({
       $and: [
-        { 'areaCats.catId': catId },
+        { catId },
         {
-          'areaCats.isDeleted': false,
+          isDeleted: false,
         },
-        { 'areaCats.startTime': { $lte: now } },
+        { startTime: { $lte: now } },
         {
-          $or: [
-            { 'areaCats.endTime': { $gte: now } },
-            { 'areaCats.endTime': null },
-          ],
+          $or: [{ endTime: { $gte: now } }, { endTime: null }],
         },
       ],
     })
@@ -73,7 +114,13 @@ exports.createAreaCat = async (areaCat) => {
   if (lastAreaCat && !lastAreaCat.endTime) {
     lastAreaCat.endTime = areaCat.startTime;
     lastAreaCat.save();
-    console.log('lastAreaCat', lastAreaCat);
+  } else if (lastAreaCat && lastAreaCat.endTime) {
+    if (lastAreaCat.endTime > areaCat.startTime) {
+      throw new AppError(
+        `New area start time must greater than last area end time`,
+        400,
+      );
+    }
   }
 
   const creatingAreaCat = await areaCatModel.create(areaCat);
@@ -87,7 +134,24 @@ exports.createAreaCat = async (areaCat) => {
       },
       { new: true },
     );
-    console.log(cat);
+    console.log('cat', cat.areaCats);
+
+    const area = await areaModel.findByIdAndUpdate(
+      areaCat.areaId,
+      {
+        $push: {
+          areaCats: creatingAreaCat._id,
+        },
+      },
+      { new: true },
+    );
+    console.log('area', area.areaCats);
   }
   return creatingAreaCat;
 };
+
+exports.updateAreaCat = (areaCatId, areaCat) =>
+  areaCatModel.findByIdAndUpdate(areaCatId, areaCat, { new: true });
+
+exports.deleteAreaCat = async (areaCatId) =>
+  areaCatModel.findByIdAndUpdate(areaCatId, { isDeleted: true }, { new: true });

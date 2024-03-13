@@ -7,8 +7,12 @@ const invoiceSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'users',
-      required: [true, 'Invoice must have a user'],
+      ref: 'user',
+    },
+    staffId: {
+      type: Schema.Types.ObjectId,
+      ref: 'user',
+      required: false,
     },
     coffeeShopId: {
       type: Schema.Types.ObjectId,

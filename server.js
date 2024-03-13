@@ -2,7 +2,7 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const app = require('./app');
-const { frontendURL } = require('./utils/urlConstant');
+const { frontendURL } = require('./utils/appConstant');
 
 app.use(cors({ origin: frontendURL }));
 dotenv.config({ path: './config.env' });

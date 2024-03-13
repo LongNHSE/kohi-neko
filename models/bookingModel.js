@@ -16,12 +16,11 @@ const bookingSchema = new mongoose.Schema(
     },
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'users',
-      required: [true, 'Booking must have a customer'],
+      ref: 'user',
     },
     staffId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'users',
+      ref: 'user',
       required: false,
     },
     invoices: [
@@ -48,7 +47,7 @@ const bookingSchema = new mongoose.Schema(
     },
     refundMakerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'users',
+      ref: 'user',
       required: false,
     },
     refundReason: {

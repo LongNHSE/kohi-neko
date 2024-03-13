@@ -45,4 +45,6 @@ router.get(
   areaController.getTableTypeInArea,
 );
 
+router.get('/areas/:areaId/tableTypes', areaController.getTableTypeInArea);
+
 exports.router = router;
