@@ -147,6 +147,8 @@ exports.createBooking = catchAsync(async (req, res, next) => {
   const { tableTypeId } = req.body;
   const dateGet = new Date(req.body.date);
   dateGet.setHours(0, 0, 0, 0);
+  dateGet.setHours(0, 0, 0, 0);
+  dateGet.setDate(dateGet.getDate() + 1);
   let startHour = req.body.from;
   let endHour = req.body.to;
 
