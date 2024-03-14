@@ -281,6 +281,7 @@ exports.getAllBooking = catchAsync(async (req, res, next) => {
 exports.getAllAvailableTime = catchAsync(async (req, res, next) => {
   const dateGet = new Date(req.body.date);
   const date = new Date(req.body.date);
+  date.setDate(dateGet.getDate() + 1);
   let startHour = req.body.from;
   let endHour = req.body.to;
   const { tableTypeId } = req.body;
